@@ -1,9 +1,21 @@
 const express = require('express');
-
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocs = require('./docs/swagger.js');
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+
+app.get('/docs.json', (req, res) => {
+    res.json(swaggerDocs);
+});
+
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
+    explorer: true,
+    swaggerOptions: {
+        url: '/docs.json',
+    },
+}));
 
 app.listen(PORT, () => {
     console.log(`Servidor do Departamento de Polícia rodando em localhost: ${PORT}`);
