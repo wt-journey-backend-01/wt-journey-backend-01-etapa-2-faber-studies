@@ -27,12 +27,19 @@ function addNewAgent(req, res) {
 
     const dataRegex = /^\d{4}-\d{2}-\d{2}$/; 
 
+    const dateOfIncorp = new Date(dataDeIncorporacao);
+    const today = new Date();
+
     if (!nome || !dataDeIncorporacao || !cargo) {
         return handleBadRequest(res, "Todos os campos são obrigatórios!");
     }
 
     if (!dataRegex.test(dataDeIncorporacao)) {
         return handleBadRequest(res, "Campo dataDeIncorporacao deve serguir o formato 'YYYY-MM-DD");   
+    }
+
+    if (dateOfIncorp > today) {
+        return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
     }
 
     const newAgent = {
@@ -51,6 +58,9 @@ function updateAgent(req, res) {
     const id = req.params.id;
     const {nome, dataDeIncorporacao, cargo} = req.body;
 
+    const dateOfIncorp = new Date(dataDeIncorporacao);
+    const today = new Date();
+
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
     if (!uuidRegex.test(id)) {
@@ -59,6 +69,14 @@ function updateAgent(req, res) {
 
     if (!nome || !dataDeIncorporacao || !cargo) {
         return handleBadRequest(res, 'Todos os campos devem ser preenchidos!');
+    }
+
+    if (req.body.id) {
+        return handleBadRequest(res, 'Campo ID não pode ser alterado!');
+    }
+
+    if (dateOfIncorp > today) {
+        return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
     }
 
     const updatedAgent = agentesRepository.updateAgentOnRepo(id, {nome, dataDeIncorporacao, cargo});
@@ -74,7 +92,11 @@ function patchAgent(req, res) {
     const id = req.params.id;
     const updates = req.body;
 
+    const dateOfIncorp = new Date(req.body.dataDeIncorporacao);
+    const today = new Date();
+
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    
 
     if (!uuidRegex.test(id)) {
         return handleBadRequest(res, 'ID não formatado');
@@ -84,6 +106,15 @@ function patchAgent(req, res) {
         return handleBadRequest(res, 'Envie ao menos um campo para atualizar!');
     }
 
+    if (req.body.id) {
+        return handleBadRequest(res, 'Campo ID não pode ser alterado!')
+    }
+
+    if (dateOfIncorp > today) {
+        return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
+    }
+
+    delete req.body.id;
     const patchedAgent = agentesRepository.patchAgentOnRepo(id, updates);
 
     if (!patchedAgent) {
