@@ -1,50 +1,41 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 9 créditos restantes para usar o sistema de feedback AI.
+Você tem 8 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para faber-studies:
 
-Nota final: **21.5/100**
+Nota final: **50.3/100**
 
-# Feedback para faber-studies 🚓✨
+Olá, faber-studies! 👋🚀
 
-Olá, faber-studies! Que legal ver seu empenho nesse desafio da API para o Departamento de Polícia! 👏 Você já conseguiu implementar uma boa parte da funcionalidade para o recurso de **agentes**, com rotas, controllers e repositórios funcionando para o básico de listagem e busca por ID. Isso é um ótimo começo! 🎉
-
----
-
-## 🎯 Pontos Positivos que Merecem Destaque
-
-- Seu código para o recurso `/agentes` está organizado em rotas, controllers e repositories, o que é exatamente o que o desafio pede! Isso mostra que você já entendeu bem a arquitetura modular que facilita a manutenção e escalabilidade do projeto.
-- A validação do ID no controller (`getAgentById`) está presente e bem feita, usando regex para UUID, o que é ótimo para garantir a qualidade dos dados.
-- Você já está tratando erros 400 (bad request) e 404 (not found) no controller de agentes, retornando mensagens claras e status corretos. Isso é fundamental para uma API robusta.
-- O uso do Swagger para documentar as rotas de agentes também está bem encaminhado, o que ajuda muito na comunicação da API.
-- Outro ponto legal: você já tem o repositório de casos com dados simulados, mostrando que pensou na estrutura dos dados para esse recurso.
+Primeiramente, parabéns pelo empenho e por já ter implementado várias funcionalidades essenciais da sua API para o Departamento de Polícia! 🎉 Você fez um ótimo trabalho ao construir o CRUD completo para os agentes, incluindo validações, tratamento de erros e status HTTP corretos. Isso mostra que você compreendeu muito bem a arquitetura modular com rotas, controllers e repositories. Além disso, você já avançou nos bônus, implementando alguns filtros e mensagens de erro customizadas — isso é sensacional! 👏👏
 
 ---
 
-## 🔍 O que Precisa de Atenção — Vamos à Análise Profunda!
+### 🎯 Pontos Fortes que Merecem Destaque
 
-### 1. Falta do Endpoint `/casos` e Suas Operações
+- Seu arquivo `routes/agentesRoutes.js` está muito bem estruturado, com todas as rotas REST para agentes implementadas e documentadas com Swagger.
+- O controller `agentesController.js` cuida bem das validações de UUID, campos obrigatórios e formatação da data.
+- O repositório `agentesRepository.js` manipula corretamente o array em memória, com funções claras para CRUD.
+- Você usou middlewares do Express para JSON e integrou o Swagger UI de forma correta.
+- Implementou tratamento de erros com funções reutilizáveis (`handleBadRequest`, `handleNotFound`, etc.), o que deixa o código mais limpo e organizado.
+- Implementou filtros e buscas mais avançadas (mesmo que ainda incompletas), mostrando que está indo além do básico.
 
-Ao analisar seu código, percebi que **não existe o arquivo `routes/casosRoutes.js`** no seu projeto. Isso é um ponto crucial, porque sem esse arquivo você não está expondo nenhuma rota para o recurso `/casos`. 
+---
 
-No seu `server.js`, você só importou e usou as rotas de agentes:
+### 🔍 Análise Profunda e Oportunidades de Melhoria
 
-```js
-const agentesRouter = require('./routes/agentesRoutes.js');
-app.use(agentesRouter);
-```
+#### 1. **Falta do Endpoint e Rotas para `/casos`**
 
-Mas não há nada relacionado a casos, como:
+Ao analisar seu projeto, percebi que seu repositório tem o arquivo `repositories/casosRepository.js` com os dados dos casos, mas **não existe o arquivo `routes/casosRoutes.js`** e nem o controller `controllers/casosController.js` está implementado. Isso é crucial! Sem essas partes, sua API não consegue expor os endpoints para manipular os casos, o que explica porque vários testes relacionados a casos falharam.
 
-```js
-const casosRouter = require('./routes/casosRoutes.js');
-app.use(casosRouter);
-```
+**Por que isso é importante?**  
+Mesmo que você tenha os dados e o repositório, a API só funciona se você criar as rotas e o controller que irão receber as requisições HTTP e chamar o repositório. Sem isso, o cliente não consegue acessar nem criar casos!
 
-**Esse é o problema raiz para várias falhas nos testes e funcionalidades relacionadas a casos!** Sem as rotas, o Express nem sabe que o endpoint `/casos` existe. Logo, não adianta implementar validações ou controllers para casos se as rotas não estão lá para receber as requisições.
+**O que fazer?**  
+Crie o arquivo `routes/casosRoutes.js` e defina as rotas REST para `/casos` (GET, POST, PUT, PATCH, DELETE). Depois, implemente o `casosController.js` para lidar com as requisições, fazendo as validações necessárias e chamando o repositório.
 
-**Vamos corrigir isso?** Crie o arquivo `routes/casosRoutes.js` com as rotas básicas para GET, POST, PUT, PATCH e DELETE, e importe esse arquivo no `server.js`. Por exemplo:
+Exemplo básico para começar:
 
 ```js
 // routes/casosRoutes.js
@@ -53,169 +44,140 @@ const router = express.Router();
 const casosController = require('../controllers/casosController.js');
 
 router.get('/casos', casosController.getCasos);
-router.post('/casos', casosController.createCaso);
-// ... outras rotas PUT, PATCH, DELETE
+router.get('/casos/:id', casosController.getCasoById);
+router.post('/casos', casosController.addNewCaso);
+router.put('/casos/:id', casosController.updateCaso);
+router.patch('/casos/:id', casosController.patchCaso);
+router.delete('/casos/:id', casosController.deleteCaso);
 
 module.exports = router;
 ```
 
-E no `server.js`:
+E no seu `server.js` você precisa importar e usar esse router:
+
+```js
+const casosRouter = require('./routes/casosRoutes.js');
+// ...
+app.use(casosRouter);
+```
+
+Assim, sua API vai conseguir responder às requisições dos casos.
+
+---
+
+#### 2. **Estrutura de Diretórios e Organização**
+
+Notei que na estrutura do seu projeto o arquivo de rotas para casos está nomeado como `routes/casosRouters.js` (com "Routers" no plural e com um "s" extra) e não `casosRoutes.js` como esperado. Além disso, o arquivo `controllers/casosController.js` está vazio.
+
+Isso causa dois problemas:
+
+- O Express não está encontrando o arquivo correto para as rotas de casos, então os endpoints não existem.
+- O controller de casos não está implementado, então mesmo que as rotas existissem, não teria lógica.
+
+**Por que é importante?**  
+Manter a nomenclatura e estrutura alinhadas com o que o projeto espera facilita a manutenção, a leitura do código e evita erros na importação.
+
+**O que fazer?**  
+Renomeie o arquivo para `casosRoutes.js` e implemente o controller `casosController.js`. Assim, você segue a arquitetura MVC proposta e garante que o servidor carregue corretamente as rotas.
+
+---
+
+#### 3. **Validação do ID e Dados dos Casos**
+
+Outro ponto que gerou penalidades foi sobre o ID dos casos: você está usando IDs que não são UUIDs válidos para os casos, como `"t3u4v5w6-x7y8-4z9a-b0c1-d2e3f4a5b6c7"` que contém letras inválidas para UUID (exemplo: "t", "u", "v", "x", "y", "z"). Isso pode causar falhas na validação do ID.
+
+**Por que isso importa?**  
+A API espera que os IDs sejam UUIDs válidos para garantir unicidade e formato correto. Isso também afeta as validações no controller, que verificam se o ID está no formato correto antes de buscar no repositório.
+
+**O que fazer?**  
+Gere IDs para casos usando o pacote `uuid` (como você fez para agentes) para garantir que todos os IDs sigam o padrão UUID.
+
+---
+
+#### 4. **Validação de Datas e Atualização do ID**
+
+Notei que no controller de agentes, você permite alterar o `id` do agente via PUT ou PATCH, o que não é correto. O ID deve ser imutável, pois é o identificador único do recurso.
+
+Além disso, você permite registrar agentes com datas de incorporação no futuro, o que não faz sentido no contexto.
+
+**Por que isso é importante?**  
+Permitir alterar o ID pode causar inconsistência nos dados e dificultar o rastreamento. Datas no futuro para incorporação são inválidas no mundo real e devem ser rejeitadas.
+
+**O que fazer?**  
+- No controller, ignore qualquer campo `id` enviado no corpo da requisição para PUT e PATCH, ou retorne erro se tentar alterar.
+- Implemente uma validação para a data de incorporação que rejeite datas futuras, por exemplo:
+
+```js
+const dataIncorp = new Date(dataDeIncorporacao);
+const hoje = new Date();
+
+if (dataIncorp > hoje) {
+    return handleBadRequest(res, "Data de incorporação não pode ser futura.");
+}
+```
+
+---
+
+#### 5. **Inclusão das Rotas de Casos no `server.js`**
+
+Seu `server.js` importa e usa apenas o router de agentes:
+
+```js
+const agentesRouter = require('./routes/agentesRoutes.js');
+app.use(agentesRouter);
+```
+
+Para que os endpoints de casos funcionem, você precisa importar e usar o router de casos também:
 
 ```js
 const casosRouter = require('./routes/casosRoutes.js');
 app.use(casosRouter);
 ```
 
-Assim, você começa a destravar todas as funcionalidades do recurso de casos!
-
-Recomendo fortemente assistir a este vídeo para entender como organizar rotas em arquivos separados e usá-las no Express:  
-👉 [Express.js Routing - Documentação Oficial](https://expressjs.com/pt-br/guide/routing.html)  
-Também este vídeo sobre arquitetura MVC vai te ajudar a organizar controllers, rotas e repositories:  
-👉 [Arquitetura MVC com Node.js e Express](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)
+Assim, o Express vai reconhecer as rotas de casos.
 
 ---
 
-### 2. Falta de Implementação dos Controllers e Repositórios para Casos
+### 📚 Recomendações de Aprendizado
 
-Além das rotas, o arquivo `controllers/casosController.js` está completamente vazio. Ou seja, mesmo que você criasse as rotas, não haveria lógica para tratar as requisições.
+Para te ajudar a consolidar esses conceitos e corrigir esses pontos, recomendo muito os seguintes recursos:
 
-Também, no arquivo `repositories/casosRepository.js`, você tem os dados estáticos, mas não há funções exportadas para manipular esses dados, como listar todos os casos, buscar por ID, criar, atualizar ou deletar.
+- **Arquitetura MVC e organização de projetos Node.js**  
+  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH  
+  (Esse vídeo vai te ajudar a organizar controllers, rotas e repositories de forma clara e escalável.)
 
-**Sem esses controllers e funções no repositório, a API não consegue funcionar!**
+- **Roteamento no Express.js**  
+  https://expressjs.com/pt-br/guide/routing.html  
+  (Para entender como usar `express.Router()` e montar suas rotas corretamente.)
 
-Sugestão inicial para o repositório de casos:
+- **Validação de dados e tratamento de erros em APIs REST**  
+  https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_  
+  (Aprenda como validar corretamente os dados recebidos e retornar status 400, 404, etc.)
 
-```js
-const casos = [ /* seus dados */ ];
-
-function allCases() {
-    return casos;
-}
-
-function caseById(id) {
-    return casos.find(c => c.id === id);
-}
-
-// Funções para criar, atualizar e deletar casos devem ser implementadas aqui
-
-module.exports = {
-    allCases,
-    caseById,
-    // exporte as outras funções também
-};
-```
-
-E no controller, algo como:
-
-```js
-const casosRepository = require('../repositories/casosRepository.js');
-const { handleNotFound, handleBadRequest } = require('../utils/errorHandler.js');
-
-function getCasos(req, res) {
-    const casos = casosRepository.allCases();
-    res.status(200).json(casos);
-}
-
-function getCasoById(req, res) {
-    const id = req.params.id;
-    // Validação do ID e busca do caso...
-}
-
-module.exports = {
-    getCasos,
-    getCasoById,
-    // outras funções
-};
-```
-
-Se quiser um guia para aprender como construir esses controllers e repositories, veja este vídeo que ensina validação e tratamento de dados em APIs Node.js:  
-👉 [Validação de dados em APIs Node.js/Express](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)
+- **Uso correto de UUIDs para IDs**  
+  https://youtu.be/RSZHvQomeKE  
+  (Este vídeo cobre a criação e uso de IDs únicos em APIs.)
 
 ---
 
-### 3. Estrutura de Diretórios e Nomenclatura dos Arquivos
+### 📝 Resumo dos Principais Pontos para Melhorar
 
-Notei na estrutura do seu projeto que o arquivo de rotas para casos está nomeado como `casosRouters.js` (com um "s" extra no final de "Routers"), mas deveria ser `casosRoutes.js` para seguir o padrão do projeto e do desafio.
-
-Além disso, o arquivo não está presente no repositório, como já comentado.
-
-A estrutura correta deve ser:
-
-```
-routes/
-├── agentesRoutes.js
-└── casosRoutes.js
-```
-
-Essa padronização é importante para manter seu projeto organizado, facilitar a manutenção e evitar erros na hora de importar os arquivos.
-
-Para entender melhor a importância da organização do projeto e como aplicar a arquitetura MVC, recomendo:  
-👉 [Arquitetura MVC com Node.js e Express](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)
+- **Implemente as rotas e controllers para o recurso `/casos`** — esse é o passo fundamental para que a API funcione para casos.
+- **Corrija a estrutura de arquivos:** renomeie `casosRouters.js` para `casosRoutes.js` e preencha o controller `casosController.js`.
+- **Garanta que os IDs dos casos sejam UUIDs válidos** para passar nas validações.
+- **Não permita alteração do campo `id` nos agentes via PUT ou PATCH.**
+- **Valide que a data de incorporação não seja futura.**
+- **Inclua o router de casos no `server.js` para que as rotas sejam registradas no Express.**
 
 ---
 
-### 4. IDs Devem Ser UUIDs Válidos
+### Finalizando...
 
-Você recebeu penalidades porque os IDs usados para agentes e casos não são todos UUIDs válidos. Por exemplo, no seu array de casos, alguns IDs têm letras que não fazem parte do padrão UUID (como `b2c3d4e5-6f7g-8h9i-j0k1-l2m3n4o5p6q7`), onde aparecem letras como "g", "h", "i" que não são hexadecimais.
+Você está no caminho certo, faber-studies! 🌟 Seu código para agentes está muito bem feito e organizado, e você já mostrou que sabe lidar com validações, erros e a estrutura do projeto. Agora, focando em implementar o recurso de casos e corrigindo os detalhes apontados, sua API vai ficar completa e robusta. Continue assim, aprendendo e evoluindo! 💪🚀
 
-Isso gera problemas na validação e pode causar erros inesperados.
+Qualquer dúvida, estou aqui para ajudar! 😉
 
-Para resolver, gere UUIDs válidos para todos os seus dados estáticos. Você pode usar ferramentas online como https://www.uuidgenerator.net/ ou bibliotecas como `uuid` no Node.js.
-
-Exemplo de ID UUID válido:  
-`f5fb2ad5-22a8-4cb4-90f2-8733517a0d46`
-
-Assim, o regex que você usa para validar IDs no controller funcionará corretamente.
-
----
-
-### 5. Uso do Middleware para Rotas e JSON
-
-No seu `server.js`, você usa:
-
-```js
-app.use(express.json());
-app.use(agentesRouter);
-```
-
-Isso está correto para agentes, mas lembre-se de adicionar o middleware para as rotas de casos também, depois de criar o arquivo e importar.
-
----
-
-## 🚀 Resumo Rápido para Você Focar
-
-- **Crie o arquivo `routes/casosRoutes.js`** e defina as rotas para todos os métodos HTTP necessários no recurso `/casos`. Importe esse arquivo no `server.js`.
-- **Implemente o `casosController.js`** com as funções para manipular as requisições (GET, POST, PUT, PATCH, DELETE).
-- **Implemente funções no `casosRepository.js`** para manipular o array de casos (listar, buscar por ID, criar, atualizar, deletar).
-- **Corrija os IDs dos agentes e casos para que sejam UUIDs válidos**, garantindo que a validação funcione sem erros.
-- **Ajuste a estrutura e nomenclatura dos arquivos** para seguir o padrão do desafio (ex: `casosRoutes.js`, não `casosRouters.js`).
-- Continue usando validações e tratamento de erros como já faz no agente, replicando para os casos.
-- Explore os recursos recomendados para entender melhor a arquitetura, rotas, validação e manipulação de dados.
-
----
-
-## 🌟 Você está no caminho certo!
-
-Seu trabalho com agentes está bem feito e mostra que você entendeu os conceitos básicos. Agora, é hora de expandir isso para o recurso de casos e garantir que todas as rotas e controllers estejam implementados e integrados corretamente.
-
-Continue com essa dedicação! Cada passo que você dá constrói uma base mais sólida para suas habilidades em Node.js e Express. Estou aqui torcendo pelo seu sucesso! 💪🚓
-
-Se precisar de ajuda para começar a criar as rotas de casos ou os controllers, me avise que podemos montar juntos! 😉
-
----
-
-# Recursos recomendados para você:
-
-- [Express.js Routing - Documentação Oficial](https://expressjs.com/pt-br/guide/routing.html)  
-- [Arquitetura MVC com Node.js e Express](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)  
-- [Validação de dados em APIs Node.js/Express](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)  
-- [UUID Generator](https://www.uuidgenerator.net/) (para gerar IDs válidos)  
-
----
-
-Continue firme, faber-studies! Seu esforço vai te levar longe! 🚀👮‍♂️👮‍♀️
-
-Abraços do seu Code Buddy! 🤖💙
+Um abraço e bons códigos! 👨‍💻👩‍💻✨
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
