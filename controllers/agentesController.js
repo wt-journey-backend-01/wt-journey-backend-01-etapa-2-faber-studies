@@ -1,17 +1,19 @@
 const agentesRepository = require('../repositories/agentesRepository.js');
 const {handleNotFound, handleBadRequest, handleCreated, handleNotContent} = require('../utils/errorHandler.js')
+const {validUuid, validDate} = require('../utils/validators.js');
 const { v4: uuidv4 } = require('uuid');
+
 
 function getAgentes(req, res) {
     const agentes = agentesRepository.allAgents();
     res.status(200).json(agentes);
 }
 
+
 function getAgentById(req, res) {
     const id = req.params.id;
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    if (!id || !uuidRegex.test(id)) {
+    if (!validUuid(id)) {
         return handleBadRequest(res, 'ID mal formatado');
     }
 
@@ -22,24 +24,23 @@ function getAgentById(req, res) {
     res.status(200).json(agent);
 }
 
+
 function addNewAgent(req, res) {
     const { nome, dataDeIncorporacao, cargo } = req.body;
 
-    const dataRegex = /^\d{4}-\d{2}-\d{2}$/; 
-
-    const dateOfIncorp = new Date(dataDeIncorporacao);
-    const today = new Date();
+    const {dateValidation, error} = validDate(dataDeIncorporacao);
 
     if (!nome || !dataDeIncorporacao || !cargo) {
         return handleBadRequest(res, "Todos os campos são obrigatórios!");
     }
 
-    if (!dataRegex.test(dataDeIncorporacao)) {
-        return handleBadRequest(res, "Campo dataDeIncorporacao deve serguir o formato 'YYYY-MM-DD");   
-    }
-
-    if (dateOfIncorp > today) {
-        return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
+    if (!dateValidation) {
+        if (error === "false format") {
+            return handleBadRequest(res, "Campo dataDeIncorporacao deve serguir o formato 'YYYY-MM-DD");   
+        }
+        if (error === "future date") {
+            return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
+        }
     }
 
     const newAgent = {
@@ -54,16 +55,14 @@ function addNewAgent(req, res) {
     return handleCreated(res, newAgent);
 }
 
+
 function updateAgent(req, res) {
     const id = req.params.id;
     const {nome, dataDeIncorporacao, cargo} = req.body;
 
-    const dateOfIncorp = new Date(dataDeIncorporacao);
-    const today = new Date();
+    const {dateValidation, error} = validDate(dataDeIncorporacao);
 
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-    if (!uuidRegex.test(id)) {
+    if (!validUuid(id)) {
         return handleBadRequest(res, 'ID mal formatado');
     }
 
@@ -75,8 +74,13 @@ function updateAgent(req, res) {
         return handleBadRequest(res, 'Campo ID não pode ser alterado!');
     }
 
-    if (dateOfIncorp > today) {
-        return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
+    if (!dateValidation) {
+        if (error === "false format") {
+            return handleBadRequest(res, "Campo dataDeIncorporacao deve serguir o formato 'YYYY-MM-DD");   
+        }
+        if (error === "future date") {
+            return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
+        }
     }
 
     const updatedAgent = agentesRepository.updateAgentOnRepo(id, {nome, dataDeIncorporacao, cargo});
@@ -88,17 +92,14 @@ function updateAgent(req, res) {
     res.status(200).json(updatedAgent);
 }
 
+
 function patchAgent(req, res) {
     const id = req.params.id;
     const updates = req.body;
 
-    const dateOfIncorp = new Date(req.body.dataDeIncorporacao);
-    const today = new Date();
+    const {dateValidation, error} = validDate(req.body.dataDeIncorporacao);    
 
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    
-
-    if (!uuidRegex.test(id)) {
+    if (!validUuid(id)) {
         return handleBadRequest(res, 'ID não formatado');
     }
 
@@ -110,8 +111,13 @@ function patchAgent(req, res) {
         return handleBadRequest(res, 'Campo ID não pode ser alterado!')
     }
 
-    if (dateOfIncorp > today) {
-        return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
+    if (!dateValidation) {
+        if (error === "false format") {
+            return handleBadRequest(res, "Campo dataDeIncorporacao deve serguir o formato 'YYYY-MM-DD");   
+        }
+        if (error === "future date") {
+            return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
+        }
     }
 
     delete req.body.id;
@@ -124,11 +130,11 @@ function patchAgent(req, res) {
     res.status(200).json(patchedAgent);
 }
 
+
 function deleteAgent(req, res) {
     const id = req.params.id;
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-    if (!uuidRegex.test(id)) {
+    if (!validUuid(id)) {
         return handleBadRequest(res, 'ID mal formatado!');
     }
 
@@ -140,6 +146,7 @@ function deleteAgent(req, res) {
 
     return handleNotContent(res);
 }
+
 
 module.exports = {
     getAgentes,
