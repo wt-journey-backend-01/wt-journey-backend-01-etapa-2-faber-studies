@@ -98,4 +98,113 @@ router.get('/agentes', agentesController.getAgentes);
  */
 router.get('/agentes/:id', agentesController.getAgentById);
 
+/**
+ * @swagger
+ * /agentes:
+ *   post:
+ *     summary: Cadastra um novo agente
+ *     tags: [Agentes]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nome
+ *               - dataDeIncorporacao
+ *               - cargo
+ *             properties:
+ *               nome:
+ *                 type: string
+ *                 example: João Silva
+ *               dataDeIncorporacao:
+ *                 type: string
+ *                 example: 2020-01-01
+ *               cargo:
+ *                 type: string
+ *                 example: delegado
+ *     responses:
+ *       201:
+ *         description: Agente criado com sucesso
+ *       400:
+ *         description: Dados inválidos
+ */
+router.post('/agentes', agentesController.addNewAgent);
+
+/**
+ * @swagger
+ * /agentes/{id}:
+ *   put:
+ *     summary: Atualiza todos os dados de um agente
+ *     tags: [Agentes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID do agente a ser atualizado
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome:
+ *                 type: string
+ *                 example: João Atualizado
+ *               dataDeIncorporacao:
+ *                 type: string
+ *                 example: 2021-06-30
+ *               cargo:
+ *                 type: string
+ *                 example: delegado
+ *     responses:
+ *       200:
+ *         description: Agente atualizado com sucesso
+ *       400:
+ *         description: Requisição inválida ou dados mal formatados
+ *       404:
+ *         description: Agente não encontrado
+ */
+router.put('/agentes/:id', agentesController.updateAgent);
+
+/**
+ * @swagger
+ * /agentes/{id}:
+ *   patch:
+ *     summary: Atualiza parcialmente os dados de um agente
+ *     tags: [Agentes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID do agente a ser atualizado
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome:
+ *                 type: string
+ *                 example: João Atualizado Parcial
+ *               cargo:
+ *                 type: string
+ *                 example: inspetor
+ *     responses:
+ *       200:
+ *         description: Agente atualizado com sucesso
+ *       400:
+ *         description: Requisição inválida ou dados mal formatados
+ *       404:
+ *         description: Agente não encontrado
+ */
+router.patch('/agentes/:id', agentesController.patchAgent);
+
 module.exports = router;

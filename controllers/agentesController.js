@@ -1,5 +1,6 @@
 const agentesRepository = require('../repositories/agentesRepository.js');
-const {handleNotFound, handleBadRequest} = require('../utils/errorHandler.js')
+const {handleNotFound, handleBadRequest, handleCreated} = require('../utils/errorHandler.js')
+const { v4: uuidv4 } = require('uuid');
 
 function getAgentes(req, res) {
     const agentes = agentesRepository.allAgents();
@@ -21,7 +22,81 @@ function getAgentById(req, res) {
     res.status(200).json(agent);
 }
 
+function addNewAgent(req, res) {
+    const { nome, dataDeIncorporacao, cargo } = req.body;
+
+    const dataRegex = /^\d{4}-\d{2}-\d{2}$/; 
+
+    if (!nome || !dataDeIncorporacao || !cargo) {
+        return handleBadRequest(res, "Todos os campos são obrigatórios!");
+    }
+
+    if (!dataRegex.test(dataDeIncorporacao)) {
+        return handleBadRequest(res, "Campo dataDeIncorporacao deve serguir o formato 'YYYY-MM-DD");   
+    }
+
+    const newAgent = {
+        id: uuidv4(),
+        nome,
+        dataDeIncorporacao,
+        cargo
+    };
+
+    agentesRepository.addNewAgentToRepo(newAgent);
+
+    return handleCreated(res, newAgent);
+}
+
+function updateAgent(req, res) {
+    const id = req.params.id;
+    const {nome, dataDeIncorporacao, cargo} = req.body;
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    if (!uuidRegex.test(id)) {
+        return handleBadRequest(res, 'ID mal formatado');
+    }
+
+    if (!nome || !dataDeIncorporacao || !cargo) {
+        return handleBadRequest(res, 'Todos os campos devem ser preenchidos!');
+    }
+
+    const updatedAgent = agentesRepository.updateAgentOnRepo(id, {nome, dataDeIncorporacao, cargo});
+
+    if (!updatedAgent) {
+        return handleNotFound(res, 'Agente não encontrado!');
+    }
+
+    res.status(200).json(updatedAgent);
+}
+
+function patchAgent(req, res) {
+    const id = req.params.id;
+    const updates = req.body;
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    if (!uuidRegex.test(id)) {
+        return handleBadRequest(res, 'ID não formatado');
+    }
+
+    if (!updates || Object.keys(updates).length === 0) {
+        return handleBadRequest(res, 'Envie ao menos um campo para atualizar!');
+    }
+
+    const patchedAgent = agentesRepository.patchAgentOnRepo(id, updates);
+
+    if (!patchedAgent) {
+        return handleNotFound(res, 'Agente não encontrado!');
+    }
+
+    res.status(200).json(patchedAgent);
+}
+
 module.exports = {
     getAgentes,
-    getAgentById
+    getAgentById,
+    addNewAgent,
+    updateAgent,
+    patchAgent
 }
