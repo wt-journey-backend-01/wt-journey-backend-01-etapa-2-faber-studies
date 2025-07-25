@@ -72,12 +72,25 @@ function patchAgentOnRepo(id, updates) {
     return agents[index];
 }
 
+function deleteAgentOnRepo(id) {
+    const index = agents.findIndex(a => a.id === id);
+
+    if (index === -1) {
+        return false;
+    }
+
+    agents.splice(index, 1);
+
+    return true;
+}
+
 module.exports = {
     allAgents,
     agentsById,
     addNewAgentToRepo,
     updateAgentOnRepo,
-    patchAgentOnRepo
+    patchAgentOnRepo,
+    deleteAgentOnRepo
 } 
 
 

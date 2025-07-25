@@ -1,5 +1,5 @@
 const agentesRepository = require('../repositories/agentesRepository.js');
-const {handleNotFound, handleBadRequest, handleCreated} = require('../utils/errorHandler.js')
+const {handleNotFound, handleBadRequest, handleCreated, handleNotContent} = require('../utils/errorHandler.js')
 const { v4: uuidv4 } = require('uuid');
 
 function getAgentes(req, res) {
@@ -93,10 +93,28 @@ function patchAgent(req, res) {
     res.status(200).json(patchedAgent);
 }
 
+function deleteAgent(req, res) {
+    const id = req.params.id;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    if (!uuidRegex.test(id)) {
+        return handleBadRequest(res, 'ID mal formatado!');
+    }
+
+    const deleted = agentesRepository.deleteAgentOnRepo(id);
+
+    if (!deleted) {
+        return handleNotFound(res, 'Agente não encontrado');
+    }
+
+    return handleNotContent(res);
+}
+
 module.exports = {
     getAgentes,
     getAgentById,
     addNewAgent,
     updateAgent,
-    patchAgent
+    patchAgent,
+    deleteAgent
 }

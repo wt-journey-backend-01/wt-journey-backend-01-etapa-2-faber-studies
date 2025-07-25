@@ -207,4 +207,27 @@ router.put('/agentes/:id', agentesController.updateAgent);
  */
 router.patch('/agentes/:id', agentesController.patchAgent);
 
+/**
+ * @swagger
+ * /agentes/{id}:
+ *   delete:
+ *     summary: Remove um agente pelo ID
+ *     tags: [Agentes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID do agente a ser removido
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: Agente removido com sucesso (sem corpo na resposta)
+ *       400:
+ *         description: ID mal formatado
+ *       404:
+ *         description: Agente não encontrado
+ */
+router.delete('/agentes/:id', agentesController.deleteAgent);
+
 module.exports = router;
