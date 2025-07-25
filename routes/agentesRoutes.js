@@ -44,18 +44,20 @@ router.get('/agentes', agentesController.getAgentes);
  * @swagger
  * /agentes/{id}:
  *   get:
- *     summary: Retorna um agente pelo ID
+ *     summary: Retorna um agente específico pelo ID
  *     tags: [Agentes]
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: ID do agente
+ *         description: UUID do agente
  *         schema:
  *           type: string
+ *           format: uuid
+ *           example: 401bccf5-cf9e-489d-8412-446cd169a0f1
  *     responses:
  *       200:
- *         description: Agente encontrado com sucesso
+ *         description: Agente retornado com sucesso
  *         content:
  *           application/json:
  *             schema:
@@ -63,15 +65,37 @@ router.get('/agentes', agentesController.getAgentes);
  *               properties:
  *                 id:
  *                   type: string
+ *                   example: 401bccf5-cf9e-489d-8412-446cd169a0f1
  *                 nome:
  *                   type: string
+ *                   example: Rommel Carneiro
  *                 dataDeIncorporacao:
  *                   type: string
+ *                   example: 1992/10/04
  *                 cargo:
  *                   type: string
+ *                   example: delegado
+ *       400:
+ *         description: ID mal formatado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: ID mal formatado
  *       404:
  *         description: Agente não encontrado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Agente não encontrado
  */
-router.get('/agentes/:id', agentesController.getAgenteById);
+router.get('/agentes/:id', agentesController.getAgentById);
 
 module.exports = router;
