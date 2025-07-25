@@ -1,10 +1,13 @@
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocs = require('./docs/swagger.js');
+const agentesRouter = require('./routes/agentesRoutes.js');
+
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+app.use(agentesRouter)
 
 app.get('/docs.json', (req, res) => {
     res.json(swaggerDocs);
@@ -13,7 +16,7 @@ app.get('/docs.json', (req, res) => {
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, {
     explorer: true,
     swaggerOptions: {
-        url: '/docs.json',
+        url: '/docs',
     },
 }));
 
