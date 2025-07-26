@@ -45,7 +45,7 @@ router.get('/casos', casosController.getAllCases);
 
 /**
  * @swagger
- * /casos/:{id}:
+ * /casos/{id}:
  *   get:
  *     summary: Retorna um caso pelo ID
  *     tags: [Casos]

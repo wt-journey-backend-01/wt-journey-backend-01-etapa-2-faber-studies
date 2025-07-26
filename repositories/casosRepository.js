@@ -99,7 +99,7 @@ function addNewCaseOnRepo(newCase){
 }
 
 function updateCaseOnRepo(id, newData) {
-    const index = cases.indexOf(c => c.id === id);
+    const index = cases.findIndex(c => c.id === id);
     if (index === -1) {
         return null
     }
@@ -107,7 +107,7 @@ function updateCaseOnRepo(id, newData) {
 }
 
 function patchCaseOnRepo(id, updates) {
-    const index = cases.indexOf(c => c.id === id);
+    const index = cases.findIndex(c => c.id === id);
     if (index === -1) {
         return null
     }
@@ -116,7 +116,7 @@ function patchCaseOnRepo(id, updates) {
 }
 
 function deleteCaseOnRepo(id) {
-    const index = cases.indexOf(c => c.id === id);
+    const index = cases.findIndex(c => c.id === id);
     if (index === -1) {
         return false;
     }

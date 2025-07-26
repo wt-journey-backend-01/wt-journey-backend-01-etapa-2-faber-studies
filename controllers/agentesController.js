@@ -100,7 +100,7 @@ function patchAgent(req, res) {
     const {dateValidation, error} = validDate(req.body.dataDeIncorporacao);    
 
     if (!validUuid(id)) {
-        return handleBadRequest(res, 'ID não formatado');
+        return handleBadRequest(res, 'ID mal formatado');
     }
 
     if (!updates || Object.keys(updates).length === 0) {

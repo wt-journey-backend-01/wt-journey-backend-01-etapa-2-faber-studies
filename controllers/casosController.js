@@ -28,6 +28,7 @@ function addNewCase(req, res){
     if (!titulo || !descricao || !status || !agente_id) {
         return handleBadRequest(res, 'Todos os campos precisam ser preenchidos!');
     }
+    
     if (!validUuid(agente_id)) {
         return handleBadRequest(res, 'Formato de UUID inválido pro agente associado ao caso.');
     }
@@ -38,6 +39,12 @@ function addNewCase(req, res){
 
     if (!agentExists) {
         return handleNotFound(res, 'Agente associado ao caso não encontrado na lista de agentes cadastrados!');
+    }
+
+    const validStatuses = ['aberto', 'em andamento','fechado'];
+
+    if (!validStatuses.includes(status.toLowerCase())) {
+        return handleBadRequest(res, `Status inválido. Valores permitidos ${validStatuses.join(', ')}`);
     }
 
     const newCase = {
