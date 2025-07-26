@@ -89,12 +89,11 @@ function allCases(){
     return cases;
 }
 
-function casesById(id) {
-    const case_ = cases.map(c => c.id === id);
-    return case_;
+function caseById(id) {
+    return cases.find(c => c.id === id);
 }
 
-function newCaseOnRepo(newCase){
+function addNewCaseOnRepo(newCase){
     cases.push(newCase);
     return newCase;
 }
@@ -127,8 +126,8 @@ function deleteCaseOnRepo(id) {
 
 module.exports = {
     allCases,
-    casesById,
-    newCaseOnRepo,
+    caseById,
+    addNewCaseOnRepo,
     updateCaseOnRepo,
     patchCaseOnRepo,
     deleteCaseOnRepo
