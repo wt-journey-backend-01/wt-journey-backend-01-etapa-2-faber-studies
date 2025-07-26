@@ -1,4 +1,4 @@
-const casos = [
+const cases = [
     {
         "id": "7f1d1566-a232-4360-b844-312c74bc283a",
         "titulo": "homicídio",
@@ -84,3 +84,52 @@ const casos = [
         "agente_id": "805bccf5-cf9e-489d-8412-446cd169a0f5"
     }
 ];
+
+function allCases(){
+    return cases;
+}
+
+function casesById(id) {
+    const case_ = cases.map(c => c.id === id);
+    return case_;
+}
+
+function newCaseOnRepo(newCase){
+    cases.push(newCase);
+    return newCase;
+}
+
+function updateCaseOnRepo(id, newData) {
+    const index = cases.indexOf(c => c.id === id);
+    if (index === -1) {
+        return null
+    }
+    return cases[index] = {id, ...newData};
+}
+
+function patchCaseOnRepo(id, updates) {
+    const index = cases.indexOf(c => c.id === id);
+    if (index === -1) {
+        return null
+    }
+
+    return cases[index] = {...cases[index], ...updates}
+}
+
+function deleteCaseOnRepo(id) {
+    const index = cases.indexOf(c => c.id === id);
+    if (index === -1) {
+        return false;
+    }
+    cases.splice(index, 1);
+    return true;
+}
+
+module.exports = {
+    allCases,
+    casesById,
+    newCaseOnRepo,
+    updateCaseOnRepo,
+    patchCaseOnRepo,
+    deleteCaseOnRepo
+}

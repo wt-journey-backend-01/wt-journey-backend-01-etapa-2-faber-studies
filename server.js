@@ -1,13 +1,15 @@
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocs = require('./docs/swagger.js');
-const agentesRouter = require('./routes/agentesRoutes.js');
+const agentsRouter = require('./routes/agentesRoutes.js');
+const casesRouter = require('./routes/casosRoutes.js');
 
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
-app.use(agentesRouter)
+app.use(agentsRouter);
+app.use(casesRouter);
 
 app.get('/docs.json', (req, res) => {
     res.json(swaggerDocs);
