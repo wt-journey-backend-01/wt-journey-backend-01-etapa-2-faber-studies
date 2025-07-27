@@ -13,8 +13,31 @@ const casosController = require('../controllers/casosController.js');
  * @swagger
  * /casos:
  *   get:
- *     summary: Retorna todos os casos
+ *     summary: Lista todos os casos, com possibilidade de filtros
  *     tags: [Casos]
+ *     parameters:
+ *       - in: query
+ *         name: agente_id
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         required: false
+ *         description: Filtra os casos atribuídos a um agente específico
+ *         example: 401bccf5-cf9e-489d-8412-446cd169a0f1
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Filtra os casos pelo status (aberto, em andamento ou fechado)
+ *         example: aberto
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Pesquisa full-text no título ou descrição do caso
+ *         example: homicídio
  *     responses:
  *       200:
  *         description: Lista de casos retornada com sucesso
@@ -27,20 +50,25 @@ const casosController = require('../controllers/casosController.js');
  *                 properties:
  *                   id:
  *                     type: string
- *                     example: f5fb2ad5-22a8-4cb4-90f2-8733517a0d46
+ *                     example: 7f1d1566-a232-4360-b844-312c74bc283a
  *                   titulo:
  *                     type: string
  *                     example: homicídio
- *                   descricao: 
- *                     type: string           
- *                     example: Disparos foram reportados às 22:33 do dia 10/07/2007 na região do bairro União, resultando na morte da vítima, um homem de 45 anos.
+ *                   descricao:
+ *                     type: string
+ *                     example: Disparos foram reportados às 22:33 do dia 10/07/2007 na região do bairro União.
  *                   status:
  *                     type: string
- *                     example: fechado
+ *                     example: aberto
  *                   agente_id:
  *                     type: string
  *                     example: 401bccf5-cf9e-489d-8412-446cd169a0f1
+ *       400:
+ *         description: Parâmetros inválidos (status ou agente_id incorretos)
+ *       404:
+ *         description: Nenhum caso encontrado com os filtros fornecidos
  */
+
 router.get('/casos', casosController.getAllCases);
 
 /**
@@ -76,6 +104,49 @@ router.get('/casos', casosController.getAllCases);
  *                     example: 401bccf5-cf9e-489d-8412-446cd169a0f1
  */
 router.get('/casos/:id', casosController.getCaseById);
+
+/**
+ * @swagger
+ * /casos/{id}/agente:
+ *   get:
+ *     summary: Retorna os dados do agente responsável por um caso específico
+ *     tags: [Casos]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID do caso
+ *         example: 7f1d1566-a232-4360-b844-312c74bc283a
+ *     responses:
+ *       200:
+ *         description: Dados do agente retornados com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   example: 401bccf5-cf9e-489d-8412-446cd169a0f1
+ *                 nome:
+ *                   type: string
+ *                   example: Rommel Carneiro
+ *                 dataDeIncorporacao:
+ *                   type: string
+ *                   example: 1992-10-04
+ *                 cargo:
+ *                   type: string
+ *                   example: delegado
+ *       400:
+ *         description: ID mal formatado
+ *       404:
+ *         description: Caso ou agente não encontrado
+ */
+
+router.get('/casos/:id/agente', casosController.getAgentByCase)
 
 /**
  * @swagger

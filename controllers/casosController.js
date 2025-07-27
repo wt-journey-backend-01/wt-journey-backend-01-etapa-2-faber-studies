@@ -1,12 +1,72 @@
 const casosRepository = require('../repositories/casosRepository');
-const { allAgents } = require('../repositories/agentesRepository');
+const { allAgents, agentsById } = require('../repositories/agentesRepository');
 const {handleNotFound, handleBadRequest, handleInvalidId, handleCreated, handleNoContent} = require('../utils/errorHandler');
 const { validUuid, validDate, verifyAgentExists, validStatus, validStatusesList } = require('../utils/validators');
 const { v4: uuidv4 } = require('uuid');
 
 function getAllCases(req, res){
-    const cases = casosRepository.allCases();
-    return res.status(200).json(cases);
+    let {agente_id, status, q} = req.query;
+
+    let filteredCases = casosRepository.allCases();
+
+    if (agente_id) {
+
+        agente_id = agente_id.toString().trim();
+
+        if(!validUuid(agente_id)){
+            return handleInvalidId(res, 'ID inválido');
+        }
+
+        filteredCases = filteredCases.filter(c => c.agente_id === agente_id);
+        
+        if (filteredCases.length == 0) {
+            return handleNotFound(res, 'Não encontrado');
+        }
+        
+    }
+
+    if (status) {
+        status = status.toString().trim();
+
+        if (!validStatus(status)) {
+            return handleBadRequest(res, `Status inválido. Status existentes: ${validStatusesList.join(', ')}`);
+        }
+
+        filteredCases = filteredCases.filter(c => c.status === status);
+
+        if (filteredCases.length == 0) {
+            return handleNotFound(res, 'Não encontrado');
+        }
+    }
+
+    if (q) {
+        q = q.toString().trim();
+
+        filteredCases = filteredCases.filter(c => 
+            c.titulo.toLowerCase().includes(q.toLowerCase()) ||
+            c.descricao.toLowerCase().includes(q.toLowerCase())
+        );
+    }
+
+    return res.status(200).json(filteredCases);
+}
+
+function getAgentByCase(req, res) {
+    const id = req.params.id.toString().trim();
+
+    if (!validUuid(id)) {
+        return handleInvalidId(res, 'ID inválido');
+    }
+
+
+    const case_ = casosRepository.caseById(id);
+    if(!case_) {
+        return handleNotFound(res, 'Caso não encontrado');
+    }
+
+    const agent = agentsById(case_.agente_id);
+
+    return res.status(200).json(agent);
 }
 
 function getCaseById(req, res){
@@ -69,19 +129,16 @@ function updateCase(req, res) {
         return handleNotFound(res, 'Caso não encontrado!');
     }
 
-    if (Object.keys(updates).length < 4) {
-        return handleBadRequest(res, 'Todos os campos devem ser preenchidos!');
-    }
-
     const allowedFields = ['titulo','descricao','status','agente_id'];
     const invalidFields = Object.keys(updates).filter(field => !allowedFields.includes(field));
     if (invalidFields.length > 0) {
         return handleBadRequest(res, `Campos inválidos: ${invalidFields.join(', ')}`);
     }
 
-    const requiredFields = ['titulo', 'descricao', 'status','agente_id'];
-    for (let field of requiredFields) {
-        if (updates[field].toString().trim() === "") {
+    const requiredFields = ['titulo', 'descricao', 'status', 'agente_id'];
+
+    for (const field of requiredFields) {
+        if (!updates[field] || updates[field].toString().trim() === '') {
             return handleBadRequest(res, `Campo ${field} é obrigatório e não pode estar vazio`);
         }
     }
@@ -159,7 +216,7 @@ function patchCase(req, res) {
 
         const agents = allAgents();
         if (!verifyAgentExists(updates.agente_id, agents)) {
-            return handleBadRequest(res, 'Agente não encontrado');
+            return handleNotFound(res, 'Agente não encontrado');
         }
     }
 
@@ -206,6 +263,7 @@ function deleteCase(req, res) {
 
 module.exports = {
     getAllCases,
+    getAgentByCase,
     getCaseById,
     addNewCase,
     updateCase,

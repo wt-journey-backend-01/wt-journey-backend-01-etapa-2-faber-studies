@@ -5,7 +5,27 @@ const { v4: uuidv4 } = require('uuid');
 
 
 function getAgentes(req, res) {
-    const agentes = agentesRepository.allAgents();
+    const {cargo, sort} = req.query;
+    let agentes = agentesRepository.allAgents();
+
+    if (cargo) {
+        agentes = agentes.filter(a => a.cargo.toLowerCase() === cargo.toLowerCase());
+    }
+
+    if (sort) {
+        const order = sort.startsWith('-') ? 'desc' : 'asc';
+        const field = sort.replace('-', '');
+
+        if (field === 'dataDeIncorporacao') {
+            agentes.sort((a, b) => {
+                const dateA = new Date(a.dataDeIncorporacao);
+                const dateB = new Date(b.dataDeIncorporacao);
+
+                return order === 'asc' ? dateA - dateB : dateB - dateA;
+            });
+        }
+    }
+
     res.status(200).json(agentes);
 }
 

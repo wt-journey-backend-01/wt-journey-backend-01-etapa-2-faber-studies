@@ -13,8 +13,26 @@ const agentesController = require('../controllers/agentesController.js');
  * @swagger
  * /agentes:
  *   get:
- *     summary: Retorna todos os agentes
+ *     summary: Retorna todos os agentes (com opção de filtro e ordenação)
  *     tags: [Agentes]
+ *     parameters:
+ *       - in: query
+ *         name: cargo
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: >
+ *           Filtra os agentes pelo cargo (ex.: delegado, inspetor)
+ *         example: delegado
+ *       - in: query
+ *         name: sort
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: >
+ *           Ordena os agentes por data de incorporação. Use `dataDeIncorporacao` (ascendente)
+ *           ou `-dataDeIncorporacao` (descendente)
+ *         example: -dataDeIncorporacao
  *     responses:
  *       200:
  *         description: Lista de agentes retornada com sucesso
@@ -32,13 +50,14 @@ const agentesController = require('../controllers/agentesController.js');
  *                     type: string
  *                     example: João Silva
  *                   dataDeIncorporacao:
- *                     type: string           
- *                     example: 2020-01-01     
+ *                     type: string
+ *                     example: 2020-01-01
  *                   cargo:
  *                     type: string
- *                     example: Detetive
+ *                     example: delegado
  */
 router.get('/agentes', agentesController.getAgentes);
+
 
 /**
  * @swagger
