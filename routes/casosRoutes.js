@@ -36,7 +36,7 @@ const casosController = require('../controllers/casosController.js');
  *                     example: Disparos foram reportados às 22:33 do dia 10/07/2007 na região do bairro União, resultando na morte da vítima, um homem de 45 anos.
  *                   status:
  *                     type: string
- *                     example: aberto
+ *                     example: fechado
  *                   agente_id:
  *                     type: string
  *                     example: 401bccf5-cf9e-489d-8412-446cd169a0f1
@@ -70,7 +70,7 @@ router.get('/casos', casosController.getAllCases);
  *                     example: Disparos foram reportados às 22:33 do dia 10/07/2007 na região do bairro União, resultando na morte da vítima, um homem de 45 anos.
  *                   status:
  *                     type: string
- *                     example: aberto
+ *                     example: fechado
  *                   agente_id:
  *                     type: string
  *                     example: 401bccf5-cf9e-489d-8412-446cd169a0f1
@@ -103,7 +103,7 @@ router.get('/casos/:id', casosController.getCaseById);
  *                 example: Disparos foram reportados às 22:33 do dia 10/07/2007 na região do bairro União, resultando na morte da vítima, um homem de 45 anos.
  *               status:
  *                 type: string
- *                 example: Aberto
+ *                 example: em andamento
  *               agente_id: 
  *                 type: string
  *                 example: 401bccf5-cf9e-489d-8412-446cd169a0f1                
@@ -151,7 +151,7 @@ router.post('/casos', casosController.addNewCase);
  *                 example: Disparos foram reportados às 22:33 do dia 10/07/2007 na região do bairro União, resultando na morte da vítima, um homem de 45 anos.
  *               status:
  *                 type: string
- *                 example: Aberto
+ *                 example: em andamento
  *               agente_id: 
  *                 type: string
  *                 example: 401bccf5-cf9e-489d-8412-446cd169a0f1  
@@ -193,7 +193,7 @@ router.put('/casos/:id', casosController.updateCase);
  *                 example: Disparos foram reportados às 22:33 do dia 10/07/2007 na região do bairro União, resultando na morte da vítima, um homem de 45 anos.
  *               status:
  *                 type: string
- *                 example: Aberto
+ *                 example: em andamento
  *               agente_id: 
  *                 type: string
  *                 example: 401bccf5-cf9e-489d-8412-446cd169a0f1 
@@ -230,78 +230,6 @@ router.patch('/casos/:id', casosController.patchCase);
  */
 router.delete('/casos/:id', casosController.deleteCase);
 
-/**
- * @swagger
- * /casos:
- *   get:
- *     summary: Lista casos com filtros opcionais
- *     tags: [Casos]
- *     parameters:
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *           enum: [aberto, solucionado]
- *         description: Filtra casos pelo status do caso.
- *       - in: query
- *         name: agente_id
- *         schema:
- *           type: string
- *           format: uuid
- *         description: Filtra casos pelo agente responsável.
- *       - in: query
- *         name: keyword
- *         schema:
- *           type: string
- *         description: Pesquisa palavra-chave no título ou na descrição do caso.
- *     responses:
- *       200:
- *         description: Lista de casos filtrada com sucesso
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                     example: f5fb2ad5-22a8-4cb4-90f2-8733517a0d46
- *                   titulo:
- *                     type: string
- *                     example: Homicídio
- *                   descricao:
- *                     type: string
- *                     example: Disparos foram reportados às 22:33 do dia 10/07/2007 no bairro União, resultando na morte da vítima.
- *                   status:
- *                     type: string
- *                     enum: [aberto, solucionado]
- *                     example: aberto
- *                   agente_id:
- *                     type: string
- *                     format: uuid
- *                     example: 401bccf5-cf9e-489d-8412-446cd169a0f1
- */
-router.get('/casos', (req, res) => {
-    const { status, agente_id, keyword } = req.query;
-    let filteredCases = casosRepository.allCases();
-
-    if (status) {
-        filteredCases = filteredCases.filter(c => c.status.toLowerCase() === status.toLowerCase());
-    }
-
-    if (agente_id) {
-        filteredCases = filteredCases.filter(c => c.agente_id === agente_id);
-    }
-
-    if (keyword) {
-        filteredCases = filteredCases.filter(c =>
-            c.titulo.toLowerCase().includes(keyword.toLowerCase()) ||
-            c.descricao.toLowerCase().includes(keyword.toLowerCase())
-        );
-    }
-
-    res.status(200).json(filteredCases);
-});
+router.get('/casos', casosController.getFilteredCases);
 
 module.exports = router

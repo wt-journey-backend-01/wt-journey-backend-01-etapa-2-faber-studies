@@ -12,7 +12,7 @@ function getAllCases(req, res){
 function getCaseById(req, res){
     const id = req.params.id;
     if (!validUuid(id)) {
-        return handleBadRequest(res, 'ID mal formatado!');
+        return handleInvalidId(res, 'ID mal formatado!');
     }
     const case_ = casosRepository.caseById(id);
 
@@ -172,11 +172,34 @@ function deleteCase(req, res) {
     return handleNotContent(res);
 }
 
+function getFilteredCases(req, res) {
+    const { status, agente_id, keyword } = req.query;
+    let filteredCases = casosRepository.allCases();
+
+    if (status) {
+        filteredCases = filteredCases.filter(c => c.status.toLowerCase() === status.toLowerCase());
+    }
+
+    if (agente_id) {
+        filteredCases = filteredCases.filter(c => c.agente_id === agente_id);
+    }
+
+    if (keyword) {
+        filteredCases = filteredCases.filter(c =>
+            c.titulo.toLowerCase().includes(keyword.toLowerCase()) ||
+            c.descricao.toLowerCase().includes(keyword.toLowerCase())
+        );
+    }
+
+    res.status(200).json(filteredCases);
+}
+
 module.exports = {
     getAllCases,
     getCaseById,
     addNewCase,
     updateCase,
     patchCase,
-    deleteCase
+    deleteCase,
+    getFilteredCases
 }
