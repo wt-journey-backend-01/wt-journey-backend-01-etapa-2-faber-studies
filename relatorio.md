@@ -1,191 +1,297 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 6 créditos restantes para usar o sistema de feedback AI.
+Você tem 5 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para faber-studies:
 
-Nota final: **65.2/100**
+Nota final: **64.6/100**
 
-# Feedback para faber-studies 🚔✨
+# Feedback para o faber-studies 🚓✨
 
-Olá, faber! Que jornada incrível você está trilhando ao construir essa API para o Departamento de Polícia! 🚀 Antes de mais nada, parabéns pelo esforço e pela estruturação do seu projeto. Vamos juntos analisar os pontos fortes e onde podemos aprimorar para deixar sua API tinindo! 💪😉
-
----
-
-## 🎉 Pontos Fortes e Conquistas Bônus
-
-- Você implementou muito bem os endpoints básicos para **agentes** e **casos** — a criação, leitura, atualização (PUT) e exclusão estão funcionando bem.
-- Sua organização do projeto está correta, com pastas bem separadas para `routes`, `controllers`, `repositories` e `utils`. Isso mostra que você já entende a importância da arquitetura modular! 👏
-- Os métodos HTTP usados estão adequados e você está retornando status codes corretos para várias operações, como 201 para criação e 204 para exclusão.
-- Ótimo uso do `express.Router()` para organizar as rotas.
-- Você implementou validações importantes, como UUID e formato de data para agentes.
-- Conseguiu implementar alguns filtros e buscas extras, mesmo que os testes bônus não tenham passado totalmente — isso mostra que você foi além do básico, muito legal! 🌟
+Olá, faber-studies! Primeiro, parabéns pelo empenho e dedicação nesse desafio de API para o Departamento de Polícia! 🎉 Construir uma API RESTful completa, com várias operações e validações, não é tarefa fácil, e você já entregou muita coisa legal. Vamos juntos destrinchar seu código para potencializar ainda mais seu aprendizado e corrigir os pontos que precisam de atenção? Bora lá! 🚀
 
 ---
 
-## 🕵️‍♂️ Pontos para Atenção e Melhoria
+## 🎯 Pontos Fortes que Merecem Aplausos 👏
 
-### 1. **Endpoints para atualização e exclusão de CASOS estão faltando**
+- **Organização modular do seu projeto:** Você estruturou bem as pastas `controllers`, `repositories`, `routes` e `utils`. Isso deixa seu código escalável e fácil de manter, exatamente o que esperamos!  
+- **Implementação dos endpoints básicos:** Os métodos GET, POST, PUT, PATCH e DELETE para `/agentes` estão bem implementados e com validações importantes, como UUID e formato de data.  
+- **Validações cuidadosas:** Gostei que você valida UUIDs, datas e status, e retorna mensagens claras de erro para o cliente — isso é essencial para uma API robusta.  
+- **Tratamento de erros centralizado:** Usar funções como `handleBadRequest`, `handleNotFound` e `handleCreated` ajuda a manter o código limpo e consistente.  
+- **Swagger documentado:** A documentação está no caminho certo, com anotações nos arquivos de rotas que ajudam a entender os endpoints.  
+- **Bônus implementado parcialmente:** Você já começou a implementar filtros e mensagens customizadas, o que mostra que está buscando ir além dos requisitos básicos. Isso é ótimo! 🌟
 
-Ao analisar seu código, percebi que o arquivo `routes/casosRoutes.js` contém apenas os endpoints `GET /casos`, `GET /casos/:id` e `POST /casos`. Porém, o desafio exige que você implemente também os métodos **PUT**, **PATCH** e **DELETE** para `/casos`.
+---
 
-Sem esses endpoints, as funcionalidades de atualizar um caso por completo, atualizar parcialmente e deletar não existem na sua API, o que explica várias falhas relacionadas a essas operações.
+## 🔍 Onde o Código Precisa de Atenção (Vamos destrinchar os pontos críticos)
 
-**Exemplo do que falta:**
+### 1. Atualização parcial (PATCH) de agentes não funciona para agentes inexistentes
+
+No seu `agentesController.js`, a função `patchAgent` está assim:
 
 ```js
-// Exemplo básico de rota PUT para atualizar um caso por completo
-router.put('/casos/:id', casosController.updateCase);
+function patchAgent(req, res) {
+    const id = req.params.id;
+    const updates = req.body;
 
-// Exemplo básico de rota PATCH para atualizar parcialmente
-router.patch('/casos/:id', casosController.patchCase);
+    const {dateValidation, error} = validDate(req.body.dataDeIncorporacao);    
 
-// Exemplo básico de rota DELETE para deletar um caso
+    if (!validUuid(id)) {
+        return handleBadRequest(res, 'ID mal formatado');
+    }
+
+    if (!updates || Object.keys(updates).length === 0) {
+        return handleBadRequest(res, 'Envie ao menos um campo para atualizar!');
+    }
+
+    if (req.body.id) {
+        return handleBadRequest(res, 'Campo ID não pode ser alterado!')
+    }
+
+    if (!dateValidation) {
+        if (error === "false format") {
+            return handleBadRequest(res, "Campo dataDeIncorporacao deve serguir o formato 'YYYY-MM-DD");   
+        }
+        if (error === "future date") {
+            return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
+        }
+    }
+
+    delete req.body.id;
+    const patchedAgent = agentesRepository.patchAgentOnRepo(id, updates);
+
+    if (!patchedAgent) {
+        return handleNotFound(res, 'Agente não encontrado');
+    }
+
+    res.status(200).json(patchedAgent);
+}
+```
+
+**Análise:**  
+Você está tentando atualizar o agente diretamente chamando `patchAgentOnRepo(id, updates)`, mas antes disso, não verifica se o agente existe. Se o agente não existir, seu repositório retorna `null`, e aí você responde com 404, que está correto. Porém, o problema pode estar na função `validDate` chamada logo no início, que recebe `req.body.dataDeIncorporacao` sem verificar se esse campo existe. Se o campo não for enviado, essa função pode estar retornando algo que faz com que `dateValidation` seja `false`, causando erro prematuro.
+
+**Sugestão:**  
+Faça a validação da data somente se o campo `dataDeIncorporacao` existir no corpo da requisição para PATCH, pois ele é opcional:
+
+```js
+if (req.body.dataDeIncorporacao) {
+    const {dateValidation, error} = validDate(req.body.dataDeIncorporacao);
+    if (!dateValidation) {
+        if (error === "false format") {
+            return handleBadRequest(res, "Campo dataDeIncorporacao deve seguir o formato 'YYYY-MM-DD'");
+        }
+        if (error === "future date") {
+            return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
+        }
+    }
+}
+```
+
+Assim, você evita erro quando o campo não é enviado no PATCH.
+
+---
+
+### 2. Atualização completa (PUT) e parcial (PATCH) de casos não retornam 404 quando o caso não existe
+
+No `casosController.js`, veja a função `updateCase`:
+
+```js
+function updateCase(req, res) {
+    // ...
+    const updateCase = casosRepository.updateCaseOnRepo(id, updates);
+
+    if (!updateCase) {
+        return handleNotFound('Caso não encontrado!');
+    }
+
+    res.status(200).json(updateCase);
+}
+```
+
+Aqui você esqueceu de passar o `res` para a função `handleNotFound`. Isso faz com que o erro 404 não seja enviado corretamente, e o cliente pode ficar sem resposta adequada.
+
+**Correção:**
+
+```js
+if (!updateCase) {
+    return handleNotFound(res, 'Caso não encontrado!');
+}
+```
+
+Mesmo detalhe acontece na função `patchCase`:
+
+```js
+const update = casosRepository.patchCaseOnRepo(id, updates);
+
+if (!update) {
+    return handleNotFound(res, 'Caso não encontrado');
+}
+```
+
+Aqui está correto, pois você passou o `res`. Então o problema está só no `updateCase`.
+
+---
+
+### 3. Falta do endpoint DELETE para casos
+
+Analisando seu código, percebi que você implementou a rota DELETE para agentes no arquivo `routes/agentesRoutes.js`:
+
+```js
+router.delete('/agentes/:id', agentesController.deleteAgent);
+```
+
+E no controller `agentesController.js` tem a função `deleteAgent`.
+
+Porém, no arquivo `routes/casosRoutes.js` não existe nenhuma rota DELETE para `/casos/:id`. Também no controller `casosController.js` não há função para deletar casos. E no repositório `casosRepository.js` há a função `deleteCaseOnRepo`, mas ela não está sendo usada.
+
+**Impacto:**  
+Isso explica porque os testes de deletar casos falham — o endpoint simplesmente não existe.
+
+**Solução:**  
+Você deve criar a rota DELETE para casos, por exemplo em `routes/casosRoutes.js`:
+
+```js
 router.delete('/casos/:id', casosController.deleteCase);
 ```
 
-**Por que isso é importante?**  
-Sem esses endpoints, seu servidor não sabe como responder a requisições de atualização ou exclusão para casos, o que bloqueia funcionalidades essenciais da API.
-
----
-
-### 2. **Implementação dos métodos no controller e repository para casos**
-
-Além da ausência dos endpoints, ao olhar o arquivo `controllers/casosController.js` e `repositories/casosRepository.js`, percebi que as funções para atualizar (`updateCase`, `patchCase`) e deletar casos (`deleteCase`) não estão implementadas.
-
-No `casosController.js`, só existem:
+E implementar a função `deleteCase` em `casosController.js`:
 
 ```js
-function getAllCases(req, res){ ... }
-function getCaseById(req, res){ ... }
-function addNewCase(req, res){ ... }
-```
+function deleteCase(req, res) {
+    const id = req.params.id;
 
-E no `casosRepository.js`, embora existam funções `updateCaseOnRepo`, `patchCaseOnRepo` e `deleteCaseOnRepo`, elas têm um problema crítico: você usou `cases.indexOf(c => c.id === id)` para encontrar o índice, mas `indexOf` não aceita função, apenas valor exato. O correto é usar `findIndex`.
-
-**Aqui está o problema no seu código:**
-
-```js
-function updateCaseOnRepo(id, newData) {
-    const index = cases.indexOf(c => c.id === id); // ERRADO!
-    if (index === -1) {
-        return null
+    if (!validUuid(id)) {
+        return handleBadRequest(res, 'ID mal formatado!');
     }
-    return cases[index] = {id, ...newData};
-}
-```
 
-**Correção sugerida:**
+    const deleted = casosRepository.deleteCaseOnRepo(id);
 
-```js
-function updateCaseOnRepo(id, newData) {
-    const index = cases.findIndex(c => c.id === id); // CORRETO
-    if (index === -1) {
-        return null;
+    if (!deleted) {
+        return handleNotFound(res, 'Caso não encontrado');
     }
-    cases[index] = { id, ...newData };
-    return cases[index];
+
+    return handleNotContent(res);
 }
 ```
 
-O mesmo vale para `patchCaseOnRepo` e `deleteCaseOnRepo`. Essa falha impede que a atualização e exclusão funcionem pois o índice nunca é encontrado.
+Não esqueça de exportar essa função no módulo.
 
 ---
 
-### 3. **Validação do campo `status` no recurso CASOS**
+### 4. Falha ao criar caso com agente_id inválido ou inexistente
 
-Você recebeu uma penalidade porque sua API permite atualizar um caso com um campo `status` que não seja "aberto" ou "solucionado" (ou "fechado", conforme seu dataset). Isso indica que falta uma validação para garantir que o campo `status` só aceite valores válidos.
-
-No seu código `casosController.js`, na função `addNewCase`, não há validação específica para o valor do `status`. Também, como as funções de update ainda não existem, não há validação para o status durante atualização.
-
-**Sugestão para validação:**
+Na função `addNewCase` do `casosController.js` você faz validações importantes, como:
 
 ```js
-const validStatuses = ['aberto', 'em andamento', 'fechado'];
+if (!validUuid(agente_id)) {
+    return handleBadRequest(res, 'Formato de UUID inválido pro agente associado ao caso.');
+}
 
-if (!validStatuses.includes(status.toLowerCase())) {
-    return handleBadRequest(res, `Status inválido. Valores permitidos: ${validStatuses.join(', ')}`);
+const agents = allAgents();
+
+if (!verifyAgentExists(agente_id, agents)) {
+    return handleNotFound(res, 'Agente associado ao caso não encontrado na lista de agentes cadastrados!');
 }
 ```
 
-Essa validação deve estar presente em todos os pontos onde o `status` pode ser criado ou alterado.
-
----
-
-### 4. **Detalhes menores de validação e mensagens de erro**
-
-- Na função `patchAgent` do `agentesController.js` você tem um pequeno typo na mensagem de erro:
+Isso está correto e muito bom! Porém, percebi que você importa `allAgents` assim:
 
 ```js
-if (!validUuid(id)) {
-    return handleBadRequest(res, 'ID não formatado'); // Sugiro: 'ID mal formatado'
+const { allAgents } = require('../repositories/agentesRepository');
+```
+
+Mas no arquivo `repositories/agentesRepository.js`, a função está exportada como `allAgents` e funciona, então não tem problema aqui.
+
+O problema pode estar na função `verifyAgentExists` (que está em `utils/validators.js`) — talvez ela não esteja funcionando corretamente ou não esteja considerando casos sensíveis.
+
+**Dica:**  
+Confirme que a função `verifyAgentExists` está correta, algo assim:
+
+```js
+function verifyAgentExists(id, agents) {
+    return agents.some(agent => agent.id === id);
 }
 ```
 
-- Também notei que você faz `delete req.body.id;` depois de validar se o campo `id` foi enviado para atualização parcial, o que é ótimo para evitar alteração do ID.
+Se não estiver, corrija para garantir que a verificação seja precisa.
 
 ---
 
-### 5. **Swagger: Pequena correção na rota GET /casos/:id**
+### 5. Falta de filtros e ordenações nos endpoints (bônus)
 
-No arquivo `routes/casosRoutes.js`, a documentação Swagger para o endpoint `GET /casos/:id` está com a rota escrita assim:
+Vi que os testes bônus relacionados a filtros por status, agente, keywords e ordenação por data de incorporação não passaram. Isso indica que você ainda não implementou essas funcionalidades.
 
-```yaml
-/casos/:{id}:
+Por exemplo, para filtrar casos por status via query param, você poderia modificar o endpoint GET `/casos` para algo assim:
+
+```js
+function getAllCases(req, res) {
+    const { status, agente_id, keyword } = req.query;
+    let filteredCases = casosRepository.allCases();
+
+    if (status) {
+        filteredCases = filteredCases.filter(c => c.status.toLowerCase() === status.toLowerCase());
+    }
+
+    if (agente_id) {
+        filteredCases = filteredCases.filter(c => c.agente_id === agente_id);
+    }
+
+    if (keyword) {
+        filteredCases = filteredCases.filter(c =>
+            c.titulo.toLowerCase().includes(keyword.toLowerCase()) ||
+            c.descricao.toLowerCase().includes(keyword.toLowerCase())
+        );
+    }
+
+    res.status(200).json(filteredCases);
+}
 ```
 
-O correto é:
-
-```yaml
-/casos/{id}:
-```
-
-Esse detalhe pode causar problemas na geração da documentação e na compreensão da rota.
+E para ordenar agentes por data de incorporação no GET `/agentes`, você pode usar query params para sort e ordenar o array.
 
 ---
 
-## 📚 Recomendações de Aprendizado
+## 📚 Recursos para Você Aprofundar e Melhorar Ainda Mais
 
-Para te ajudar a corrigir esses pontos, recomendo os seguintes recursos:
+- Para entender melhor a arquitetura MVC e organização modular, recomendo este vídeo:  
+  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
 
-- Para entender melhor como estruturar rotas e controllers no Express e garantir que todos os métodos HTTP estejam implementados:  
+- Para dominar rotas no Express.js, veja a documentação oficial:  
   https://expressjs.com/pt-br/guide/routing.html
 
-- Para corrigir a manipulação dos arrays e encontrar índices corretamente:  
+- Para aprender a manipular arrays em JavaScript (filtros, buscas, ordenações):  
   https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
 
-- Para fortalecer a validação de dados na API e tratamento de erros HTTP:  
+- Para aprofundar no tratamento de erros HTTP, códigos 400 e 404:  
   https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
   https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404
 
-- Para entender melhor arquitetura MVC (Model-View-Controller) aplicada a Node.js e Express:  
-  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
+- Para entender melhor o fluxo de requisição e resposta no Express:  
+  https://youtu.be/Bn8gcSQH-bc?si=Df4htGoVrV0NR7ri
 
 ---
 
-## 🗺️ Resumo Rápido para Melhorias
+## 📝 Resumo dos Principais Pontos para Focar
 
-- [ ] **Implemente os endpoints PUT, PATCH e DELETE para `/casos` nas rotas, controllers e repositories.**
-- [ ] **Corrija o uso do método `indexOf` para `findIndex` nas funções de atualização e exclusão do repositório de casos.**
-- [ ] **Adicione validação para o campo `status` nos casos, restringindo os valores permitidos.**
-- [ ] **Corrija a rota Swagger para `GET /casos/{id}` (remova o `:` antes de `{id}`).**
-- [ ] **Revise as mensagens de erro para manter consistência e clareza.**
-
----
-
-## Finalizando 🚀
-
-Faber, você já está com uma base muito boa e estruturada, o que é fundamental para escalar seu projeto! Agora, focando nesses pontos que te mostrei, seu código vai ficar ainda mais robusto, confiável e alinhado com as melhores práticas de APIs RESTful.
-
-Continue nessa pegada, revisando cada detalhe com calma, e não hesite em buscar os recursos que te indiquei para aprofundar seu conhecimento. Estou certo que com esses ajustes sua API vai brilhar muito! 🌟
-
-Se precisar de uma mãozinha para implementar os endpoints que faltam ou para entender como usar o `findIndex` corretamente, me chama que a gente resolve juntos! 😉
-
-Abraço e bons códigos! 👊👮‍♂️
+- [ ] Corrigir a validação condicional da data em PATCH de agentes para evitar erros quando o campo não for enviado.  
+- [ ] Passar o objeto `res` para a função `handleNotFound` em `updateCase` para garantir resposta 404 correta.  
+- [ ] Implementar o endpoint DELETE para `/casos/:id` e sua função no controller para permitir a remoção de casos.  
+- [ ] Verificar e garantir que a função `verifyAgentExists` esteja funcionando corretamente para validar agentes ao criar casos.  
+- [ ] Implementar filtros e ordenações nos endpoints GET de `/casos` e `/agentes` para aproveitar os bônus e deixar a API mais poderosa.  
 
 ---
 
-**Code Buddy**
+## 🌟 Considerações Finais
+
+Você está no caminho certo, com uma base sólida e um código organizado! Os erros que encontrei são ajustes pontuais e algumas funcionalidades faltantes, que, uma vez corrigidas, vão destravar o pleno funcionamento da sua API. Continue praticando e explorando as possibilidades do Express e da manipulação de dados em memória — isso vai te deixar cada vez mais confiante para projetos maiores! 💪
+
+Se precisar, volte aos vídeos recomendados para reforçar conceitos e veja seu código com calma, linha a linha. Você vai conseguir! 👊
+
+Conte comigo para o que precisar, e bora codar mais! 🚓✨
+
+Abraços,  
+Seu Code Buddy 💙
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
