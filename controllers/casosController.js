@@ -1,7 +1,7 @@
 const casosRepository = require('../repositories/casosRepository');
-const agentesRepository = require('../repositories/agentesRepository');
+const { allAgents } = require('../repositories/agentesRepository');
 const {handleNotFound, handleBadRequest, handleCreated, handleNotContent} = require('../utils/errorHandler');
-const { validUuid, validDate } = require('../utils/validators');
+const { validUuid, validDate, verifyAgentExists, validStatus, validStatusesList } = require('../utils/validators');
 const { v4: uuidv4 } = require('uuid');
 
 function getAllCases(req, res){
@@ -33,18 +33,14 @@ function addNewCase(req, res){
         return handleBadRequest(res, 'Formato de UUID inválido pro agente associado ao caso.');
     }
 
-    const agents = agentesRepository.allAgents();
+    const agents = allAgents();
 
-    const agentExists = agents.find(a => a.id === agente_id);
-
-    if (!agentExists) {
+    if (!verifyAgentExists(agente_id, agents)) {
         return handleNotFound(res, 'Agente associado ao caso não encontrado na lista de agentes cadastrados!');
     }
 
-    const validStatuses = ['aberto', 'em andamento','fechado'];
-
-    if (!validStatuses.includes(status.toLowerCase())) {
-        return handleBadRequest(res, `Status inválido. Valores permitidos ${validStatuses.join(', ')}`);
+    if (!validStatus(status)) {
+        return handleBadRequest(res, `Status inválido. Valores permitidos: ${validStatusesList.join(', ')}`);
     }
 
     const newCase = {
@@ -58,11 +54,82 @@ function addNewCase(req, res){
     casosRepository.addNewCaseOnRepo(newCase);
 
     return res.status(201).json(newCase);
+}
+
+function updateCase(req, res) {
+    const id = req.params.id;
+    const updates = req.body;
+
+    if (updates.id) {
+        return handleBadRequest(res, 'ID não pode ser alterado!');
+    }
+
+    if (Object.keys(updates).length < 4) {
+        return handleBadRequest(res, 'Todos os campos devem que ser preenchidos!');
+    }
+
+    if (!validStatus(updates.status)) {
+        return handleBadRequest(res, `Status inválido. Valores permitidos: ${validStatusesList.join(', ')}`);
+    }
+
+    if (!validUuid(updates.agente_id)) {
+        return handleBadRequest(res, 'Formato de UUID inválido pro agente associado ao caso.');
+    }
+
+    const agents = allAgents();
+
+    if (!verifyAgentExists(updates.agente_id, agents)) {
+        return handleNotFound(res, 'Agente associado ao caso não encontrado na lista de agentes cadastrados!');
+    }
+
+    const updateCase = casosRepository.updateCaseOnRepo(id, updates);
+
+    if (!updateCase) {
+        return handleNotFound('Caso não encontrado!');
+    }
+
+    res.status(200).json(updateCase);
+}
+
+function patchCase(req, res) {
+    const id = req.params.id;
+    const updates = req.body;
+
+    if (updates.id) {
+        return handleBadRequest(res, 'Não é permitido alterar o ID baka!');
+    }
+
+    if (updates.status) {
+        if (!validStatus(updates.status)) {
+            return handleBadRequest(res, `Status inválido. Valores permitidos: ${validStatusesList.join(', ')}`);
+        }
+    }
+
+    if (updates.agente_id) {
+        if(!validUuid(updates.agente_id)) {
+            return handleBadRequest(res, 'Formato de UUID inválido!');
+        }
+
+        const agents = allAgents();
+        if (!verifyAgentExists(updates.agente_id, agents)) {
+            return handleBadRequest(res, 'Agente associado ao caso não encontrado na lista de agentes cadastrados!');
+        }
+    }
+
+    const update = casosRepository.patchCaseOnRepo(id, updates);
+
+    if (!update) {
+        return handleNotFound(res, 'Caso não encontrado');
+    }
+
+    return res.status(200).json(update);
 
 }
 
 module.exports = {
     getAllCases,
     getCaseById,
-    addNewCase
+    addNewCase,
+    updateCase,
+    patchCase
 }

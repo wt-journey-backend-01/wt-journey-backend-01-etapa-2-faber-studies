@@ -22,7 +22,24 @@ function validDate(date) {
     return true;
 }
 
+function verifyAgentExists(id, list) {
+    const agent = list.findIndex(a => a.id === id);
+    if (agent === -1) {
+        return false
+    }
+    return true;
+}
+
+const validStatusesList = ['aberto', 'em andamento', 'fechado'];
+
+function validStatus(status) {
+    return validStatusesList.includes(status.toLowerCase());
+}
+
 module.exports = {
     validUuid,
-    validDate
-}
+    validDate,
+    verifyAgentExists,
+    validStatusesList,
+    validStatus
+};

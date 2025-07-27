@@ -194,6 +194,9 @@ router.put('/agentes/:id', agentesController.updateAgent);
  *               nome:
  *                 type: string
  *                 example: João Atualizado Parcial
+ *               dataDeIncorporacao:
+ *                 type: string
+ *                 example: 22/02/2022
  *               cargo:
  *                 type: string
  *                 example: inspetor
