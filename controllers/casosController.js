@@ -126,10 +126,34 @@ function patchCase(req, res) {
 
 }
 
+function deleteCase(req, res) {
+    const id = req.params.id;
+
+    const cases = casosRepository.allCases();
+    const caseExists = cases.findIndex(c => c.id === id);
+    
+   if(!validUuid(id)) {
+        return handleBadRequest(res, 'Formato de UUID inválido!');
+    }
+
+    if (caseExists === -1) {
+        return handleNotFound(res, 'Caso não existente!');
+    }
+
+    const deleted = casosRepository.deleteCaseOnRepo(id);
+
+    if (!deleted) {
+        return handleNotFound(res, 'Caso não encontrado!');
+    }
+
+    return handleNotContent(res);
+}
+
 module.exports = {
     getAllCases,
     getCaseById,
     addNewCase,
     updateCase,
-    patchCase
+    patchCase,
+    deleteCase
 }

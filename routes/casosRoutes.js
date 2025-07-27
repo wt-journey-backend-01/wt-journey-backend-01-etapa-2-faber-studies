@@ -207,4 +207,27 @@ router.put('/casos/:id', casosController.updateCase);
  */
 router.patch('/casos/:id', casosController.patchCase);
 
+/**
+ * @swagger
+ * /casos/{id}:
+ *   delete:
+ *     summary: Remove um caso pelo ID
+ *     tags: [Casos]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID do caso a ser removido
+ *         schema:
+ *           type: string
+ *     responses:
+ *       204:
+ *         description: caso removido com sucesso (sem corpo na resposta)
+ *       400:
+ *         description: ID mal formatado
+ *       404:
+ *         description: caso não encontrado
+ */
+router.delete('/casos/:id', casosController.deleteCase);
+
 module.exports = router
