@@ -1,151 +1,138 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 3 créditos restantes para usar o sistema de feedback AI.
+Você tem 2 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para faber-studies:
 
-Nota final: **80.5/100**
+Nota final: **84.5/100**
 
-# Feedback para faber-studies 🚨👮‍♂️
+# Feedback do seu Desafio API REST para o Departamento de Polícia 🚔✨
 
-Olá, faber-studies! Tudo bem? 😊 Antes de mais nada, quero parabenizá-lo pelo esforço e pelo código que você enviou! 🎉 Construir uma API RESTful completa, com rotas, controladores, repositórios, validações e tratamento de erros não é tarefa fácil, e você fez um trabalho muito bacana, especialmente na parte dos agentes! 🕵️‍♂️
+Olá, faber-studies! Tudo bem? Primeiramente, quero te parabenizar pelo empenho e pela organização do seu projeto! 🎉👏 Você conseguiu implementar a maior parte das funcionalidades essenciais da API de forma muito consistente, e isso é super importante para construir uma base sólida.
 
 ---
 
 ## 🎯 Pontos Fortes que Merecem Destaque
 
-- Sua organização do projeto está muito próxima do que esperamos para uma arquitetura modular e escalável. Você separou bem as rotas, controllers e repositories, o que facilita a manutenção e a leitura do código.
-- O tratamento de erros está bem estruturado, usando funções auxiliares para responder com os status e mensagens corretas, o que deixa seu código mais limpo e reutilizável.
-- A validação de UUIDs, datas e status está presente e bem feita, ajudando a garantir a integridade dos dados.
-- Você implementou o endpoint de filtragem de casos por status, agente responsável e keywords, que é um baita diferencial! 🏅
-- Também fez um ótimo trabalho nas mensagens customizadas de erro, deixando sua API mais amigável e profissional.
-- Parabéns por implementar todos os métodos HTTP para o recurso `/agentes` e pela maioria dos métodos para `/casos`!
+- **Arquitetura modular bem aplicada:** Você estruturou seu projeto com rotas, controllers e repositories bem separados, exatamente como esperado. Isso facilita a manutenção e a escalabilidade do código.
+- **Endpoints para agentes e casos:** Todos os métodos HTTP principais (GET, POST, PUT, PATCH, DELETE) para `/agentes` e `/casos` estão implementados e com tratamento de erros e validações muito bem pensados.
+- **Validações robustas:** Você fez uma ótima validação de UUID, datas e status, com mensagens de erro claras para o usuário, o que é um diferencial para APIs profissionais.
+- **Swagger integrado:** A documentação está presente e organizada, o que ajuda muito na usabilidade da API.
+- **Filtros e buscas implementados:** Você foi além do básico e implementou filtros por status, agente e keywords para os casos, o que mostra um cuidado extra com a experiência do usuário.
+- **Mensagens de erro customizadas:** Mesmo que os bônus não tenham sido todos aprovados, você já trabalha com mensagens personalizadas, o que é excelente para a clareza da API.
 
 ---
 
-## 🔎 Análise Detalhada das Áreas para Melhorar
+## 🔍 Análise Profunda dos Pontos que Precisam de Atenção
 
-### 1. **Endpoints de Casos - Falhas em Atualização e Deleção**
+### 1. Problemas com os endpoints DELETE e UPDATE para o recurso `/casos`
 
-Percebi que os testes relacionados a atualização (PUT e PATCH) e deleção (DELETE) de casos estão falhando, assim como a busca por um caso com ID inválido retorna um status incorreto. Vamos entender o que está acontecendo.
+Eu percebi que os testes relacionados à exclusão e atualização de casos falharam. Isso indica que algo não está funcionando corretamente nos métodos `DELETE /casos/:id`, `PUT /casos/:id` e `PATCH /casos/:id`.
 
-- Você implementou os métodos `updateCase`, `patchCase` e `deleteCase` no `casosController.js`, o que é ótimo. Porém, ao olhar o arquivo `routes/casosRoutes.js`, vejo que **você não está importando o repositório `casosRepository`** para usar no filtro do endpoint de filtragem, mas isso é só um detalhe menor.
+Ao analisar seu código, notei algumas inconsistências que podem estar causando isso:
 
-- O ponto principal é que, no arquivo `routes/casosRoutes.js`, você **não está usando os métodos do controller para as rotas PUT, PATCH e DELETE**, e sim só definiu os GET e POST com os controllers, mas as outras rotas PUT, PATCH e DELETE estão ausentes! Isso significa que, por exemplo, o endpoint para deletar um caso pelo ID não está implementado no router.
+- Na função `deleteCase` do `casosController.js`, a validação do UUID está sendo feita **após** a busca do caso no array. Isso pode causar comportamento inesperado:
 
-Veja como você tem no `casosRoutes.js`:
+```js
+function deleteCase(req, res) {
+    const id = req.params.id;
+
+    const cases = casosRepository.allCases();
+    const caseExists = cases.findIndex(c => c.id === id);
+    
+    if(!validUuid(id)) {
+        return handleBadRequest(res, 'Formato de ID inválido!');
+    }
+
+    if (caseExists === -1) {
+        return handleNotFound(res, 'Caso não existente!');
+    }
+
+    const deleted = casosRepository.deleteCaseOnRepo(id);
+
+    if (!deleted) {
+        return handleNotFound(res, 'Caso não encontrado!');
+    }
+
+    return handleNotContent(res);
+}
+```
+
+**Por que isso é importante?**  
+Você deve validar o formato do ID antes de tentar buscar o recurso. Se o ID for inválido, a busca pode retornar `-1` mesmo que o formato esteja errado, e o erro retornado será confuso para o cliente. A ordem correta seria:
+
+```js
+if (!validUuid(id)) {
+    return handleBadRequest(res, 'Formato de ID inválido!');
+}
+
+const cases = casosRepository.allCases();
+const caseExists = cases.findIndex(c => c.id === id);
+
+if (caseExists === -1) {
+    return handleNotFound(res, 'Caso não existente!');
+}
+```
+
+---
+
+- Na função `updateCase` (PUT) e `patchCase` (PATCH), a validação dos campos e a existência do caso estão corretas, mas o problema pode estar na atualização dos dados no repositório.
+
+No `casosRepository.js`, a função `updateCaseOnRepo` está assim:
+
+```js
+function updateCaseOnRepo(id, newData) {
+    const index = cases.findIndex(c => c.id === id);
+    if (index === -1) {
+        return null
+    }
+    return cases[index] = {id, ...newData};
+}
+```
+
+E a função `patchCaseOnRepo`:
+
+```js
+function patchCaseOnRepo(id, updates) {
+    const index = cases.findIndex(c => c.id === id);
+    if (index === -1) {
+        return null
+    }
+
+    return cases[index] = {...cases[index], ...updates}
+}
+```
+
+Essas funções parecem corretas, mas um ponto que pode causar problemas é se o objeto `newData` passado para `updateCaseOnRepo` não possui todos os campos obrigatórios, ou se o ID está sendo sobrescrito de forma errada.
+
+**Dica:** Garanta que o objeto `newData` em `updateCaseOnRepo` contenha todos os campos necessários e que o ID seja mantido corretamente.
+
+---
+
+### 2. Endpoint duplicado para GET `/casos`
+
+No arquivo `routes/casosRoutes.js`, você tem duas definições para o endpoint GET `/casos`:
 
 ```js
 router.get('/casos', casosController.getAllCases);
-router.get('/casos/:id', casosController.getCaseById);
-router.post('/casos', casosController.addNewCase);
 
-// Falta implementar as rotas PUT, PATCH e DELETE usando os controllers!
+...
+
+router.get('/casos', casosController.getFilteredCases);
 ```
 
-**Por que isso importa?**  
-Se as rotas PUT, PATCH e DELETE não estão definidas, o Express não sabe o que fazer quando receber essas requisições, e isso causa falhas nos testes e na sua API.
+Isso é um problema porque o Express vai executar apenas a primeira rota encontrada para o caminho `/casos`, ignorando a segunda. Por isso, seu filtro de casos **não está sendo executado**.
 
----
+**Como corrigir?**  
+Você deve unificar essas duas funcionalidades em um único handler que verifica se há query params e, caso existam, faz o filtro; caso contrário, retorna todos os casos.
 
-### Como corrigir?  
-
-No seu `routes/casosRoutes.js`, adicione as rotas para os métodos PUT, PATCH e DELETE, apontando para os métodos correspondentes no `casosController.js`. Por exemplo:
+Exemplo:
 
 ```js
-router.put('/casos/:id', casosController.updateCase);
-router.patch('/casos/:id', casosController.patchCase);
-router.delete('/casos/:id', casosController.deleteCase);
+router.get('/casos', casosController.getFilteredCases);
 ```
 
-Assim, o Express vai encaminhar as requisições para os métodos corretos do controller, e sua API vai responder como esperado.
-
----
-
-### 2. **Status Code 404 ao Buscar Caso por ID Inválido**
-
-No método `getCaseById` do seu controller, você faz a validação do UUID assim:
-
-```js
-if (!validUuid(id)) {
-    return handleBadRequest(res, 'ID mal formatado!');
-}
-```
-
-Mas a mensagem e o status retornado deveriam indicar que o ID está mal formatado, ou seja, um **400 Bad Request** (que você já faz), porém o teste espera um **404 Not Found** quando o ID não existe.
-
-**Aqui é importante entender a diferença entre ID inválido (mal formatado) e ID inexistente (não encontrado):**
-
-- Se o ID está mal formatado, o correto é retornar **400 Bad Request**.
-- Se o ID está bem formatado, mas não existe no banco (ou array), retorna **404 Not Found**.
-
-Seu código está correto nesse ponto, mas os testes apontam que ao buscar um caso com ID inválido, o status retornado não está sendo 404 como esperado — isso pode indicar que o teste espera um 404 para IDs mal formatados, o que não está alinhado com o padrão HTTP.
-
-**Minha sugestão:** reveja a especificação da API para confirmar o status esperado para ID mal formatado. Se for para retornar 404, ajuste o `handleBadRequest` para `handleNotFound` na validação do UUID no `getCaseById`:
-
-```js
-if (!validUuid(id)) {
-    return handleNotFound(res, 'ID mal formatado!');
-}
-```
-
-Mas, se quiser seguir o padrão HTTP correto, mantenha 400 para ID mal formatado e 404 para ID inexistente. Caso o teste espere 404, ajuste conforme a necessidade.
-
----
-
-### 3. **Status dos Casos no Repositório**
-
-Notei que no seu `repositories/casosRepository.js`, você tem casos com status como `"em andamento"` e `"fechado"`, mas seu validador `validStatus` e a documentação Swagger esperam só `"aberto"` e `"solucionado"`.
-
-Exemplo do seu array:
-
-```js
-{
-    "id": "e3930bb1-79e1-44ff-a89f-a8be2cd371ca",
-    "titulo": "furto",
-    "descricao": "...",
-    "status": "em andamento",  // <- status não previsto no validador
-    "agente_id": "401bccf5-cf9e-489d-8412-446cd169a0f1"
-},
-```
-
-Isso pode gerar inconsistências e falhas na validação e filtros.
-
-**Recomendo** alinhar os status usados nos dados com os valores aceitos pela sua validação e documentação. Por exemplo, substituir `"em andamento"` por `"aberto"` e `"fechado"` por `"solucionado"`, para manter tudo consistente.
-
----
-
-### 4. **Filtros de Casos no Router**
-
-Você implementou o filtro de casos diretamente no `routes/casosRoutes.js`:
-
-```js
-router.get('/casos', (req, res) => {
-    const { status, agente_id, keyword } = req.query;
-    let filteredCases = casosRepository.allCases();
-
-    if (status) {
-        filteredCases = filteredCases.filter(c => c.status.toLowerCase() === status.toLowerCase());
-    }
-
-    if (agente_id) {
-        filteredCases = filteredCases.filter(c => c.agente_id === agente_id);
-    }
-
-    if (keyword) {
-        filteredCases = filteredCases.filter(c =>
-            c.titulo.toLowerCase().includes(keyword.toLowerCase()) ||
-            c.descricao.toLowerCase().includes(keyword.toLowerCase())
-        );
-    }
-
-    res.status(200).json(filteredCases);
-});
-```
-
-Embora funcione, esse trecho quebra a arquitetura MVC que você seguiu com os agentes, onde toda a lógica fica no controller. O ideal é criar uma função no `casosController.js` para lidar com essa filtragem e chamar essa função na rota.
-
-Exemplo no controller:
+E no controller:
 
 ```js
 function getFilteredCases(req, res) {
@@ -171,65 +158,131 @@ function getFilteredCases(req, res) {
 }
 ```
 
-E na rota:
+Assim, você atende tanto a listagem completa quanto a filtragem em um único endpoint.
+
+---
+
+### 3. Remoção de agentes (DELETE /agentes/:id) falha em alguns casos
+
+No `agentesController.js`, a função `deleteAgent` está assim:
 
 ```js
-router.get('/casos', casosController.getFilteredCases);
+function deleteAgent(req, res) {
+    const id = req.params.id;
+
+    if (!validUuid(id)) {
+        return handleInvalidId(res, 'ID mal formatado!');
+    }
+
+    const agents = agentesRepository.allAgents();
+
+    const agentExists = agents.findIndex(a => a.id === id);
+    if (agentExists === -1) {
+        return handleNotFound(res, 'Agente não encontrado!');
+    }
+
+    const deleted = agentesRepository.deleteAgentOnRepo(id);
+
+    if (!deleted) {
+        return handleNotFound(res, 'Agente não encontrado');
+    }
+
+    return handleNotContent(res);
+}
 ```
 
-Assim seu código fica mais organizado e consistente.
+Aqui, a lógica parece correta, mas eu sugiro verificar se o método `deleteAgentOnRepo` está funcionando como esperado, e se não há alguma inconsistência com os IDs.
 
----
-
-### 5. **Pequenos Detalhes que Podem Melhorar**
-
-- No método `patchAgent` do controller de agentes, você faz `delete req.body.id;` para garantir que o ID não seja alterado, mas isso não é uma boa prática alterar diretamente o objeto `req.body`. Prefira trabalhar em uma cópia dos dados.
-
-- No seu `server.js`, você importa as rotas com:
+No seu `agentesRepository.js`:
 
 ```js
-app.use(agentsRouter);
-app.use(casesRouter);
+function deleteAgentOnRepo(id) {
+    const index = agents.findIndex(a => a.id === id);
+
+    if (index === -1) {
+        return false;
+    }
+
+    agents.splice(index, 1);
+
+    return true;
+}
 ```
 
-Recomendo especificar o caminho base para as rotas, para evitar ambiguidades e facilitar a manutenção:
+Esse código está correto, mas garanta que o ID passado seja exatamente igual (tipo string, sem espaços extras) ao armazenado no array.
 
-```js
-app.use('/agentes', agentsRouter);
-app.use('/casos', casesRouter);
+---
+
+### 4. Validação de datas no agente com formatos diferentes
+
+Você faz uma validação muito boa das datas de incorporação dos agentes, mas notei que no PATCH você aceita datas no formato `22/02/2022`, que não é o esperado (`YYYY-MM-DD`).
+
+Por exemplo, no `agentesRoutes.js`:
+
+```yaml
+dataDeIncorporacao:
+  type: string
+  example: 22/02/2022
 ```
 
-Assim, no arquivo de rotas, você pode definir as rotas relativas sem repetir `/agentes` e `/casos` em cada uma.
+Mas a validação no controller espera o formato `YYYY-MM-DD`. Seria legal alinhar o exemplo da documentação para evitar confusão, assim o usuário sabe exatamente qual formato enviar.
 
 ---
 
-## 📚 Recursos para Aprofundar e Aprimorar
+## 📚 Recomendações de Estudo para Você
 
-- [Express Routing (Documentação Oficial)](https://expressjs.com/pt-br/guide/routing.html) — para entender como organizar rotas e usar `express.Router()` corretamente, especialmente para os endpoints que faltam.
-- [Fundamentos de API REST e Express.js (Vídeo)](https://youtu.be/RSZHvQomeKE) — ótimo para reforçar conceitos de métodos HTTP, status codes e organização de código.
-- [Validação e Tratamento de Erros em APIs (Vídeo)](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_) — para garantir que suas validações e respostas de erro estejam alinhadas com boas práticas.
-- [Manipulação de Arrays em JavaScript (Vídeo)](https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI) — para melhorar ainda mais a filtragem e manipulação dos dados em memória.
+Para te ajudar a consolidar esses pontos, recomendo fortemente os seguintes conteúdos:
 
----
+- **Express.js e Rotas:**  
+  [Documentação oficial do Express sobre roteamento](https://expressjs.com/pt-br/guide/routing.html) — para entender como o Express trata múltiplas rotas iguais e a importância da ordem delas.
 
-## 📝 Resumo Rápido do Que Focar
+- **Validação e Tratamento de Erros em APIs:**  
+  [Como implementar status 400 e 404 corretamente](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400) e [404](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404) — para entender melhor os códigos de erro e garantir respostas claras.
 
-- **Implemente as rotas PUT, PATCH e DELETE para `/casos` no arquivo `routes/casosRoutes.js`.**
-- Verifique e alinhe os **status dos casos** no array de dados com os valores aceitos pela validação e documentação (`"aberto"` e `"solucionado"`).
-- Ajuste o endpoint de filtro de casos para ficar no controller, mantendo a arquitetura MVC consistente.
-- Reveja o tratamento do status HTTP para ID inválido no método `getCaseById` para garantir que o status retornado esteja correto (400 ou 404 conforme o esperado).
-- No `server.js`, defina explicitamente os caminhos base para as rotas (`app.use('/agentes', agentsRouter)` e `app.use('/casos', casesRouter)`).
-- Evite modificar diretamente `req.body` dentro dos controllers; prefira trabalhar com cópias dos dados.
+- **Manipulação de Arrays no JavaScript:**  
+  [Manipulação de Arrays com findIndex, filter e splice](https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI) — para garantir que você manipule os dados em memória corretamente.
+
+- **Arquitetura MVC para Node.js:**  
+  [Arquitetura MVC explicada para Node.js](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH) — para continuar aprimorando a organização do seu projeto.
 
 ---
 
-## Finalizando 🚀
+## 🗂️ Sobre a Estrutura do Projeto
 
-Você está no caminho certo, faber-studies! A arquitetura do seu projeto está bem organizada, e sua API já tem muitos recursos funcionando perfeitamente. Com pequenos ajustes nas rotas dos casos e alinhamento dos dados, sua API vai ficar ainda mais robusta e profissional. Continue praticando, revisando e aprimorando — o progresso está claro! 💪👊
+Sua estrutura está muito bem organizada! Parabéns por seguir o padrão modular com pastas separadas para `routes`, `controllers`, `repositories`, `utils` e `docs`. Isso é essencial para projetos escaláveis.
 
-Se quiser, volte nos conteúdos recomendados para reforçar conceitos e tirar dúvidas. Estou aqui torcendo pelo seu sucesso! 🎉👮‍♀️
+Só uma dica: mantenha sempre o arquivo `server.js` limpo, delegando toda lógica para os módulos, e evite duplicação de rotas, como vimos no caso do `/casos`.
 
-Um abraço e bons códigos! 💻✨
+---
+
+## 📌 Resumo dos Principais Pontos para Melhorar
+
+- 🔄 **Unificar as rotas GET `/casos`** para evitar conflito e garantir que filtros funcionem corretamente.  
+- 🔍 **Corrigir a ordem da validação do UUID** nos métodos DELETE e UPDATE para casos, validando o formato antes de buscar o recurso.  
+- ✅ **Verificar a manipulação correta dos arrays no repositório**, garantindo que os métodos de update e delete funcionem sem falhas.  
+- 📅 **Alinhar o formato da data de incorporação nos exemplos da documentação** para evitar confusão no consumo da API.  
+- 🧹 **Evitar duplicação de rotas e manter o server.js enxuto**, delegando responsabilidades para os módulos específicos.
+
+---
+
+## Finalizando...
+
+Você está no caminho certo e com uma base muito boa! 💪✨ A API está bem estruturada, com validações e tratamento de erros que mostram seu cuidado com a qualidade do código. Ajustando esses detalhes que discutimos, sua aplicação vai ficar ainda mais robusta e profissional.
+
+Continue assim, aprendendo e evoluindo! Qualquer dúvida, estou aqui para ajudar. 🚀🚓
+
+Abraços e bons códigos! 👊😄
+
+---
+
+Se quiser começar a estudar os pontos que destaquei, aqui está um link para começar com rotas no Express, que é fundamental para corrigir o problema do filtro no `/casos`:  
+https://expressjs.com/pt-br/guide/routing.html
+
+E para entender melhor o tratamento correto de erros e status HTTP:  
+https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
+https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404
+
+Você vai arrasar! 🌟
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
