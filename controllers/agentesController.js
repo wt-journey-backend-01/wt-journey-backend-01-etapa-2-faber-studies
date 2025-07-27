@@ -60,10 +60,15 @@ function updateAgent(req, res) {
     const id = req.params.id;
     const {nome, dataDeIncorporacao, cargo} = req.body;
 
-    const {dateValidation, error} = validDate(dataDeIncorporacao);
-
     if (!validUuid(id)) {
         return handleBadRequest(res, 'ID mal formatado');
+    }
+
+    const agents = agentesRepository.allAgents();
+
+    const agentExists = agents.findIndex(a => a.id === id);
+    if (agentExists === -1) {
+        return handleNotFound(res, 'Agente não encontrado!');
     }
 
     if (!nome || !dataDeIncorporacao || !cargo) {
@@ -74,6 +79,7 @@ function updateAgent(req, res) {
         return handleBadRequest(res, 'Campo ID não pode ser alterado!');
     }
 
+    const {dateValidation, error} = validDate(dataDeIncorporacao);
     if (!dateValidation) {
         if (error === "false format") {
             return handleBadRequest(res, "Campo dataDeIncorporacao deve serguir o formato 'YYYY-MM-DD");   
@@ -97,10 +103,15 @@ function patchAgent(req, res) {
     const id = req.params.id;
     const updates = req.body;
 
-    const {dateValidation, error} = validDate(req.body.dataDeIncorporacao);    
-
     if (!validUuid(id)) {
         return handleBadRequest(res, 'ID mal formatado');
+    }
+
+    const agents = agentesRepository.allAgents();
+
+    const agentExists = agents.findIndex(a => a.id === id);
+    if (agentExists === -1) {
+        return handleNotFound(res, 'Agente não encontrado!');
     }
 
     if (!updates || Object.keys(updates).length === 0) {
@@ -111,12 +122,15 @@ function patchAgent(req, res) {
         return handleBadRequest(res, 'Campo ID não pode ser alterado!')
     }
 
-    if (!dateValidation) {
-        if (error === "false format") {
-            return handleBadRequest(res, "Campo dataDeIncorporacao deve serguir o formato 'YYYY-MM-DD");   
-        }
-        if (error === "future date") {
-            return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
+    if (updates.dataDeIncorporacao) {
+        const {dateValidation, error} = validDate(updates.dataDeIncorporacao);
+        if (!dateValidation) {
+            if (error === "false format") {
+                return handleBadRequest(res, "Campo dataDeIncorporacao deve serguir o formato 'YYYY-MM-DD");   
+            }
+            if (error === "future date") {
+                return handleBadRequest(res, 'Data de incorporação não pode ser futura!');
+            }
         }
     }
 

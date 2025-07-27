@@ -22,12 +22,8 @@ function validDate(date) {
     return true;
 }
 
-function verifyAgentExists(id, list) {
-    const agent = list.findIndex(a => a.id === id);
-    if (agent === -1) {
-        return false
-    }
-    return true;
+function verifyAgentExists(id, agents) {
+    return agents.some(agent => agent.id === id);
 }
 
 const validStatusesList = ['aberto', 'em andamento', 'fechado'];

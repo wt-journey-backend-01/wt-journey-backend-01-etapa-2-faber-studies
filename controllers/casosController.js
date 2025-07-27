@@ -85,7 +85,7 @@ function updateCase(req, res) {
     const updateCase = casosRepository.updateCaseOnRepo(id, updates);
 
     if (!updateCase) {
-        return handleNotFound('Caso não encontrado!');
+        return handleNotFound(res, 'Caso não encontrado!');
     }
 
     res.status(200).json(updateCase);
