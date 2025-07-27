@@ -1,159 +1,191 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 7 créditos restantes para usar o sistema de feedback AI.
+Você tem 6 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para faber-studies:
 
-Nota final: **59.2/100**
+Nota final: **65.2/100**
 
-# Feedback para faber-studies 🚓✨
+# Feedback para faber-studies 🚔✨
 
-Olá, faber! Primeiro, parabéns pelo esforço e pelo que você já conseguiu entregar nesse desafio complexo de API REST para o Departamento de Polícia! 🎉 Você implementou com sucesso toda a lógica para o recurso **agentes**: os endpoints estão bem estruturados, os controladores estão completos, e a manipulação dos dados em memória está funcionando direitinho. Isso é uma base muito sólida! 👏👏
-
----
-
-## O que você mandou muito bem! 🌟
-
-- **Endpoints de agentes**: Todos os métodos HTTP (GET, POST, PUT, PATCH, DELETE) estão implementados e funcionando, com validações e tratamento de erros bem feitos. Por exemplo, seu `agentesController.js` tem funções claras e checagens de UUID, datas e campos obrigatórios.
-  
-- **Organização das rotas e controllers**: Seu `routes/agentesRoutes.js` está super bem documentado e organizado, seguindo o padrão esperado.
-
-- **Manipulação dos dados em memória**: Seu `repositories/agentesRepository.js` usa corretamente métodos como `findIndex`, `splice`, `push` para gerenciar os agentes.
-
-- **Tratamento de erros customizado**: Você usa funções helper para responder com status e mensagens apropriadas, o que deixa seu código mais limpo e consistente.
-
-- **Swagger para documentação**: Ótimo uso do Swagger para documentar os endpoints de agentes!
-
-- **Validação de payload e UUID**: Você está validando IDs e formatos de data, o que é essencial para robustez.
-
-- **Bônus parcialmente alcançado**: Você avançou na implementação dos filtros e mensagens customizadas, mas ainda não completou essas funcionalidades para os casos.
+Olá, faber! Que jornada incrível você está trilhando ao construir essa API para o Departamento de Polícia! 🚀 Antes de mais nada, parabéns pelo esforço e pela estruturação do seu projeto. Vamos juntos analisar os pontos fortes e onde podemos aprimorar para deixar sua API tinindo! 💪😉
 
 ---
 
-## Pontos que precisam de atenção para destravar toda a API 🚨
+## 🎉 Pontos Fortes e Conquistas Bônus
 
-### 1. Falta de implementação dos endpoints para o recurso `/casos`
+- Você implementou muito bem os endpoints básicos para **agentes** e **casos** — a criação, leitura, atualização (PUT) e exclusão estão funcionando bem.
+- Sua organização do projeto está correta, com pastas bem separadas para `routes`, `controllers`, `repositories` e `utils`. Isso mostra que você já entende a importância da arquitetura modular! 👏
+- Os métodos HTTP usados estão adequados e você está retornando status codes corretos para várias operações, como 201 para criação e 204 para exclusão.
+- Ótimo uso do `express.Router()` para organizar as rotas.
+- Você implementou validações importantes, como UUID e formato de data para agentes.
+- Conseguiu implementar alguns filtros e buscas extras, mesmo que os testes bônus não tenham passado totalmente — isso mostra que você foi além do básico, muito legal! 🌟
 
-Ao analisar seu projeto, percebi que o arquivo `routes/casosRoutes.js` está vazio:
+---
+
+## 🕵️‍♂️ Pontos para Atenção e Melhoria
+
+### 1. **Endpoints para atualização e exclusão de CASOS estão faltando**
+
+Ao analisar seu código, percebi que o arquivo `routes/casosRoutes.js` contém apenas os endpoints `GET /casos`, `GET /casos/:id` e `POST /casos`. Porém, o desafio exige que você implemente também os métodos **PUT**, **PATCH** e **DELETE** para `/casos`.
+
+Sem esses endpoints, as funcionalidades de atualizar um caso por completo, atualizar parcialmente e deletar não existem na sua API, o que explica várias falhas relacionadas a essas operações.
+
+**Exemplo do que falta:**
 
 ```js
-// routes/casosRoutes.js
-// (arquivo vazio)
+// Exemplo básico de rota PUT para atualizar um caso por completo
+router.put('/casos/:id', casosController.updateCase);
+
+// Exemplo básico de rota PATCH para atualizar parcialmente
+router.patch('/casos/:id', casosController.patchCase);
+
+// Exemplo básico de rota DELETE para deletar um caso
+router.delete('/casos/:id', casosController.deleteCase);
 ```
 
-Além disso, o arquivo `controllers/casosController.js` também está vazio. Isso significa que **nenhum endpoint para casos foi implementado ainda**.
-
-Esse é o motivo principal pelo qual várias funcionalidades relacionadas a casos não funcionam — como criar, listar, buscar por ID, atualizar e deletar casos.
-
-⚠️ **Antes de se preocupar com validações específicas ou filtros para casos, o primeiro passo é criar esses endpoints e suas funções correspondentes!**
+**Por que isso é importante?**  
+Sem esses endpoints, seu servidor não sabe como responder a requisições de atualização ou exclusão para casos, o que bloqueia funcionalidades essenciais da API.
 
 ---
 
-### Como começar a implementar os casos?
+### 2. **Implementação dos métodos no controller e repository para casos**
 
-Você pode seguir o padrão que usou para agentes, criando:
+Além da ausência dos endpoints, ao olhar o arquivo `controllers/casosController.js` e `repositories/casosRepository.js`, percebi que as funções para atualizar (`updateCase`, `patchCase`) e deletar casos (`deleteCase`) não estão implementadas.
 
-- Um arquivo `routes/casosRoutes.js` com rotas para `/casos` (GET, POST, PUT, PATCH, DELETE).
-- Um arquivo `controllers/casosController.js` com as funções que manipulam os dados (usando o array `casos` do seu `repositories/casosRepository.js`).
-- Validar o UUID dos casos e o ID do agente associado, garantindo que o agente exista antes de criar um caso.
-
-Exemplo básico de rota para casos:
+No `casosController.js`, só existem:
 
 ```js
-const express = require('express');
-const router = express.Router();
-const casosController = require('../controllers/casosController.js');
-
-router.get('/casos', casosController.getCasos);
-router.post('/casos', casosController.addNewCaso);
-// Outras rotas PUT, PATCH, DELETE...
-
-module.exports = router;
+function getAllCases(req, res){ ... }
+function getCaseById(req, res){ ... }
+function addNewCase(req, res){ ... }
 ```
 
-E no `server.js` você precisa importar e usar essas rotas, assim como fez para agentes:
+E no `casosRepository.js`, embora existam funções `updateCaseOnRepo`, `patchCaseOnRepo` e `deleteCaseOnRepo`, elas têm um problema crítico: você usou `cases.indexOf(c => c.id === id)` para encontrar o índice, mas `indexOf` não aceita função, apenas valor exato. O correto é usar `findIndex`.
+
+**Aqui está o problema no seu código:**
 
 ```js
-const casosRouter = require('./routes/casosRoutes.js');
-app.use(casosRouter);
+function updateCaseOnRepo(id, newData) {
+    const index = cases.indexOf(c => c.id === id); // ERRADO!
+    if (index === -1) {
+        return null
+    }
+    return cases[index] = {id, ...newData};
+}
 ```
 
----
+**Correção sugerida:**
 
-### 2. Validação do UUID para casos
+```js
+function updateCaseOnRepo(id, newData) {
+    const index = cases.findIndex(c => c.id === id); // CORRETO
+    if (index === -1) {
+        return null;
+    }
+    cases[index] = { id, ...newData };
+    return cases[index];
+}
+```
 
-Você recebeu uma penalidade porque o **ID utilizado para casos não é UUID**. Ao olhar seu array `casos` no `repositories/casosRepository.js`, os IDs estão corretos, mas como os endpoints de casos não existem, não há validação sendo feita.
-
-Quando você implementar os endpoints de casos, lembre-se de validar que os IDs recebidos são UUIDs válidos, assim como fez para agentes com a função `validUuid`.
-
----
-
-### 3. Organização da estrutura do projeto
-
-Sua estrutura de pastas está correta e bem organizada, parabéns! 👏 Só fique atento para garantir que:
-
-- Os arquivos de rotas para casos não estejam vazios.
-- Os controllers para casos estejam implementados.
-- O arquivo `server.js` importe e use todas as rotas (agentes e casos).
+O mesmo vale para `patchCaseOnRepo` e `deleteCaseOnRepo`. Essa falha impede que a atualização e exclusão funcionem pois o índice nunca é encontrado.
 
 ---
 
-### 4. Validações e tratamento de erros para casos
+### 3. **Validação do campo `status` no recurso CASOS**
 
-Assim que criar os controllers para casos, implemente também:
+Você recebeu uma penalidade porque sua API permite atualizar um caso com um campo `status` que não seja "aberto" ou "solucionado" (ou "fechado", conforme seu dataset). Isso indica que falta uma validação para garantir que o campo `status` só aceite valores válidos.
 
-- Validação dos campos obrigatórios no payload (ex: título, descrição, status, agente_id).
-- Verificação se o `agente_id` existe no repositório de agentes antes de criar ou atualizar um caso.
-- Retorno dos status HTTP corretos (201 para criação, 400 para payload inválido, 404 para IDs não encontrados).
-- Mensagens de erro claras e consistentes.
+No seu código `casosController.js`, na função `addNewCase`, não há validação específica para o valor do `status`. Também, como as funções de update ainda não existem, não há validação para o status durante atualização.
+
+**Sugestão para validação:**
+
+```js
+const validStatuses = ['aberto', 'em andamento', 'fechado'];
+
+if (!validStatuses.includes(status.toLowerCase())) {
+    return handleBadRequest(res, `Status inválido. Valores permitidos: ${validStatuses.join(', ')}`);
+}
+```
+
+Essa validação deve estar presente em todos os pontos onde o `status` pode ser criado ou alterado.
 
 ---
 
-## Recomendações para você crescer ainda mais 🚀
+### 4. **Detalhes menores de validação e mensagens de erro**
 
-- **Assista a este vídeo para entender a arquitetura MVC com Node.js e Express.js**:  
-  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH  
-  Isso vai te ajudar a estruturar rotas, controllers e repositories de forma modular e escalável.
+- Na função `patchAgent` do `agentesController.js` você tem um pequeno typo na mensagem de erro:
 
-- **Reforço sobre rotas e middlewares no Express**:  
-  https://expressjs.com/pt-br/guide/routing.html  
-  Para garantir que você saiba como organizar seus arquivos de rota e usá-los no `server.js`.
+```js
+if (!validUuid(id)) {
+    return handleBadRequest(res, 'ID não formatado'); // Sugiro: 'ID mal formatado'
+}
+```
 
-- **Validação e tratamento de erros HTTP**:  
+- Também notei que você faz `delete req.body.id;` depois de validar se o campo `id` foi enviado para atualização parcial, o que é ótimo para evitar alteração do ID.
+
+---
+
+### 5. **Swagger: Pequena correção na rota GET /casos/:id**
+
+No arquivo `routes/casosRoutes.js`, a documentação Swagger para o endpoint `GET /casos/:id` está com a rota escrita assim:
+
+```yaml
+/casos/:{id}:
+```
+
+O correto é:
+
+```yaml
+/casos/{id}:
+```
+
+Esse detalhe pode causar problemas na geração da documentação e na compreensão da rota.
+
+---
+
+## 📚 Recomendações de Aprendizado
+
+Para te ajudar a corrigir esses pontos, recomendo os seguintes recursos:
+
+- Para entender melhor como estruturar rotas e controllers no Express e garantir que todos os métodos HTTP estejam implementados:  
+  https://expressjs.com/pt-br/guide/routing.html
+
+- Para corrigir a manipulação dos arrays e encontrar índices corretamente:  
+  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI
+
+- Para fortalecer a validação de dados na API e tratamento de erros HTTP:  
   https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400  
-  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404  
-  Para garantir que sua API retorne os status corretos e mensagens úteis.
+  https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/404
 
-- **Manipulação de arrays no JavaScript**:  
-  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI  
-  Para aprimorar ainda mais as operações no seu repositório.
+- Para entender melhor arquitetura MVC (Model-View-Controller) aplicada a Node.js e Express:  
+  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH
 
 ---
 
-## Resumo rápido dos principais pontos para focar 🎯
+## 🗺️ Resumo Rápido para Melhorias
 
-- [ ] **Implementar os endpoints completos para `/casos`**: rotas, controllers e integração no `server.js`.
-- [ ] **Adicionar validações para os dados de casos**, incluindo UUID do caso e do agente.
-- [ ] **Garantir tratamento de erros e status HTTP corretos para casos**.
-- [ ] **Validar se o `agente_id` do caso realmente existe no repositório de agentes** antes de criar/atualizar.
-- [ ] **Importar e usar as rotas de casos no `server.js`**, assim como fez para agentes.
-- [ ] **Revisar os conceitos de arquitetura MVC e roteamento no Express para consolidar a organização do projeto**.
-
----
-
-## Conclusão 💡
-
-Faber, seu trabalho com agentes está muito bem feito, e isso mostra que você já domina a maior parte dos conceitos fundamentais para construir APIs REST com Express. Agora, o que falta é dar o próximo passo e replicar essa estrutura para o recurso casos, que é tão importante quanto.
-
-Lembre-se: a base de qualquer API é ter os endpoints funcionando e organizados. Depois que isso estiver no lugar, as validações, filtros e mensagens customizadas vão fluir naturalmente.
-
-Continue firme, pois você está muito perto de entregar uma API robusta e completa! Se precisar, volte aos vídeos recomendados para reforçar conceitos e, claro, conte comigo para te ajudar a destravar essa etapa! 🚀👊
-
-Um abraço e bons códigos! 👮‍♂️💻
+- [ ] **Implemente os endpoints PUT, PATCH e DELETE para `/casos` nas rotas, controllers e repositories.**
+- [ ] **Corrija o uso do método `indexOf` para `findIndex` nas funções de atualização e exclusão do repositório de casos.**
+- [ ] **Adicione validação para o campo `status` nos casos, restringindo os valores permitidos.**
+- [ ] **Corrija a rota Swagger para `GET /casos/{id}` (remova o `:` antes de `{id}`).**
+- [ ] **Revise as mensagens de erro para manter consistência e clareza.**
 
 ---
 
-Se quiser, posso te ajudar a começar a implementar os endpoints de casos. Quer? 😄
+## Finalizando 🚀
+
+Faber, você já está com uma base muito boa e estruturada, o que é fundamental para escalar seu projeto! Agora, focando nesses pontos que te mostrei, seu código vai ficar ainda mais robusto, confiável e alinhado com as melhores práticas de APIs RESTful.
+
+Continue nessa pegada, revisando cada detalhe com calma, e não hesite em buscar os recursos que te indiquei para aprofundar seu conhecimento. Estou certo que com esses ajustes sua API vai brilhar muito! 🌟
+
+Se precisar de uma mãozinha para implementar os endpoints que faltam ou para entender como usar o `findIndex` corretamente, me chama que a gente resolve juntos! 😉
+
+Abraço e bons códigos! 👊👮‍♂️
+
+---
+
+**Code Buddy**
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
