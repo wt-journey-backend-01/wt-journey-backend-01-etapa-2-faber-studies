@@ -1,6 +1,6 @@
 const casosRepository = require('../repositories/casosRepository');
 const { allAgents } = require('../repositories/agentesRepository');
-const {handleNotFound, handleBadRequest, handleInvalidId, handleCreated, handleNotContent} = require('../utils/errorHandler');
+const {handleNotFound, handleBadRequest, handleInvalidId, handleCreated, handleNoContent} = require('../utils/errorHandler');
 const { validUuid, validDate, verifyAgentExists, validStatus, validStatusesList } = require('../utils/validators');
 const { v4: uuidv4 } = require('uuid');
 
@@ -10,7 +10,7 @@ function getAllCases(req, res){
 }
 
 function getCaseById(req, res){
-    const id = req.params.id;
+    const id = req.params.id.trim();
     if (!validUuid(id)) {
         return handleInvalidId(res, 'ID mal formatado!');
     }
@@ -57,11 +57,11 @@ function addNewCase(req, res){
 }
 
 function updateCase(req, res) {
-    const id = req.params.id;
+    const id = req.params.id.trim();
     const updates = req.body;
 
-    if (updates.id) {
-        return handleBadRequest(res, 'ID não pode ser alterado!');
+    if (!validUuid(id)) {
+        return handleInvalidId(res, 'ID inválido');
     }
 
     const existingCase = casosRepository.caseById(id);
@@ -73,18 +73,35 @@ function updateCase(req, res) {
         return handleBadRequest(res, 'Todos os campos devem ser preenchidos!');
     }
 
+    const allowedFields = ['titulo','descricao','status','agente_id'];
+    const invalidFields = Object.keys(updates).filter(field => !allowedFields.includes(field));
+    if (invalidFields.length > 0) {
+        return handleBadRequest(res, `Campos inválidos: ${invalidFields.join(', ')}`);
+    }
+
+    const requiredFields = ['titulo', 'descricao', 'status','agente_id'];
+    for (let field of requiredFields) {
+        if (updates[field].toString().trim() === "") {
+            return handleBadRequest(res, `Campo ${field} é obrigatório e não pode estar vazio`);
+        }
+    }
+
     if (!validStatus(updates.status)) {
         return handleBadRequest(res, `Status inválido. Valores permitidos: ${validStatusesList.join(', ')}`);
     }
 
     if (!validUuid(updates.agente_id)) {
-        return handleBadRequest(res, 'Formato de ID inválido pro agente associado ao caso.');
+        return handleInvalidId(res, 'O ID do agente é inválido');
     }
 
     const agents = allAgents();
 
     if (!verifyAgentExists(updates.agente_id, agents)) {
         return handleNotFound(res, 'Agente não encontrado');
+    }
+    
+    if (updates.id) {
+        return handleBadRequest(res, 'ID não pode ser alterado!');
     }
 
     const updateCase = casosRepository.updateCaseOnRepo(id, updates);
@@ -97,16 +114,36 @@ function updateCase(req, res) {
 }
 
 function patchCase(req, res) {
-    const id = req.params.id;
+    const id = req.params.id.trim();
     const updates = req.body;
+
+    if (!validUuid(id)) {
+        return handleInvalidId(res, 'ID inválido');
+    }
 
     const existingCase = casosRepository.caseById(id);
     if (!existingCase) {
         return handleNotFound(res, 'Caso não encontrado!');
     }
 
+    if (Object.keys(updates).length === 0) {
+        return handleBadRequest(res, 'Envie pelo menos um campo para atualização');
+    }
+
+    const allowedFields = ['titulo','descricao','status','agente_id'];
+    const invalidFields = Object.keys(updates).filter(field => !allowedFields.includes(field));
+    if (invalidFields.length > 0) {
+        return handleBadRequest(res, `Campos inválidos: ${invalidFields.join(', ')}`);
+    }
+
     if (updates.id) {
         return handleBadRequest(res, 'Não é permitido alterar o ID!');
+    }
+
+    for (let field in updates) {
+        if (updates[field].toString().trim() === "") {
+            return handleBadRequest(res, `Campo ${field} não pode estar vazio`);
+        }
     }
 
     if (updates.status) {
@@ -117,7 +154,7 @@ function patchCase(req, res) {
 
     if (updates.agente_id) {
         if(!validUuid(updates.agente_id)) {
-            return handleInvalidId(res, 'Formato de ID inválido!');
+            return handleInvalidId(res, 'O ID do agente é inválido!');
         }
 
         const agents = allAgents();
@@ -133,11 +170,6 @@ function patchCase(req, res) {
         return handleNotFound(res, 'Caso não encontrado!');
     }
 
-    const allowedFields = ['titulo','descricao','status','agente_id'];
-    const invalidFields = Object.keys(updates).filter(field => !allowedFields.includes(field));
-    if (invalidFields.length > 0) {
-        return handleBadRequest(res, `Campos inválidos: ${invalidFields.join(', ')}`);
-    }
 
     const update = casosRepository.patchCaseOnRepo(id, updates);
 
@@ -150,14 +182,14 @@ function patchCase(req, res) {
 }
 
 function deleteCase(req, res) {
-    const id = req.params.id;
+    const id = req.params.id.trim();
+    
+    if(!validUuid(id)) {
+        return handleInvalidId(res, 'Formato de ID inválido!');
+    }
 
     const cases = casosRepository.allCases();
     const caseExists = cases.findIndex(c => c.id === id);
-    
-   if(!validUuid(id)) {
-        return handleBadRequest(res, 'Formato de ID inválido!');
-    }
 
     if (caseExists === -1) {
         return handleNotFound(res, 'Caso não existente!');
@@ -169,29 +201,7 @@ function deleteCase(req, res) {
         return handleNotFound(res, 'Caso não encontrado!');
     }
 
-    return handleNotContent(res);
-}
-
-function getFilteredCases(req, res) {
-    const { status, agente_id, keyword } = req.query;
-    let filteredCases = casosRepository.allCases();
-
-    if (status) {
-        filteredCases = filteredCases.filter(c => c.status.toLowerCase() === status.toLowerCase());
-    }
-
-    if (agente_id) {
-        filteredCases = filteredCases.filter(c => c.agente_id === agente_id);
-    }
-
-    if (keyword) {
-        filteredCases = filteredCases.filter(c =>
-            c.titulo.toLowerCase().includes(keyword.toLowerCase()) ||
-            c.descricao.toLowerCase().includes(keyword.toLowerCase())
-        );
-    }
-
-    res.status(200).json(filteredCases);
+    return handleNoContent(res);
 }
 
 module.exports = {
@@ -200,6 +210,5 @@ module.exports = {
     addNewCase,
     updateCase,
     patchCase,
-    deleteCase,
-    getFilteredCases
+    deleteCase
 }

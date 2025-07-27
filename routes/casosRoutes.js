@@ -230,6 +230,4 @@ router.patch('/casos/:id', casosController.patchCase);
  */
 router.delete('/casos/:id', casosController.deleteCase);
 
-router.get('/casos', casosController.getFilteredCases);
-
 module.exports = router

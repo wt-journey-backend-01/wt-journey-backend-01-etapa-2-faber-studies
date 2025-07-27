@@ -33,7 +33,7 @@ const agentesController = require('../controllers/agentesController.js');
  *                     example: João Silva
  *                   dataDeIncorporacao:
  *                     type: string           
- *                     example: 2020/01/01     
+ *                     example: 2020-01-01     
  *                   cargo:
  *                     type: string
  *                     example: Detetive
@@ -71,7 +71,7 @@ router.get('/agentes', agentesController.getAgentes);
  *                   example: Rommel Carneiro
  *                 dataDeIncorporacao:
  *                   type: string
- *                   example: 1992/10/04
+ *                   example: 1992-10-04
  *                 cargo:
  *                   type: string
  *                   example: delegado
@@ -196,7 +196,7 @@ router.put('/agentes/:id', agentesController.updateAgent);
  *                 example: João Atualizado Parcial
  *               dataDeIncorporacao:
  *                 type: string
- *                 example: 22/02/2022
+ *                 example: 2022-02-22
  *               cargo:
  *                 type: string
  *                 example: inspetor

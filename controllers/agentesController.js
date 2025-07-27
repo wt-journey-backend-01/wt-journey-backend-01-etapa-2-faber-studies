@@ -1,5 +1,5 @@
 const agentesRepository = require('../repositories/agentesRepository.js');
-const {handleNotFound, handleBadRequest, handleCreated, handleNotContent, handleInvalidId} = require('../utils/errorHandler.js')
+const {handleNotFound, handleBadRequest, handleCreated, handleNoContent, handleInvalidId} = require('../utils/errorHandler.js')
 const {validUuid, validDate} = require('../utils/validators.js');
 const { v4: uuidv4 } = require('uuid');
 
@@ -11,7 +11,7 @@ function getAgentes(req, res) {
 
 
 function getAgentById(req, res) {
-    const id = req.params.id;
+    const id = req.params.id.trim();
 
     if (!validUuid(id)) {
         return handleInvalidId(res, 'ID inválido');
@@ -57,7 +57,7 @@ function addNewAgent(req, res) {
 
 
 function updateAgent(req, res) {
-    const id = req.params.id;
+    const id = req.params.id.trim();
     const {nome, dataDeIncorporacao, cargo} = req.body;
 
     if (!validUuid(id)) {
@@ -100,7 +100,7 @@ function updateAgent(req, res) {
 
 
 function patchAgent(req, res) {
-    const id = req.params.id;
+    const id = req.params.id.trim();
     const updates = req.body;
 
     if (!validUuid(id)) {
@@ -152,10 +152,10 @@ function patchAgent(req, res) {
 
 
 function deleteAgent(req, res) {
-    const id = req.params.id;
+    const id = req.params.id.trim();
 
     if (!validUuid(id)) {
-        return handleInvalidId(res, 'ID mal formatado!');
+        return handleInvalidId(res, 'ID inválido!');
     }
 
     const agents = agentesRepository.allAgents();
@@ -171,7 +171,7 @@ function deleteAgent(req, res) {
         return handleNotFound(res, 'Agente não encontrado');
     }
 
-    return handleNotContent(res);
+    return handleNoContent(res);
 }
 
 
