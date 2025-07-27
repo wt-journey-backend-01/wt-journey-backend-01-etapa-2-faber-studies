@@ -1,6 +1,6 @@
 const casosRepository = require('../repositories/casosRepository');
 const { allAgents } = require('../repositories/agentesRepository');
-const {handleNotFound, handleBadRequest, handleCreated, handleNotContent} = require('../utils/errorHandler');
+const {handleNotFound, handleBadRequest, handleInvalidId, handleCreated, handleNotContent} = require('../utils/errorHandler');
 const { validUuid, validDate, verifyAgentExists, validStatus, validStatusesList } = require('../utils/validators');
 const { v4: uuidv4 } = require('uuid');
 
@@ -12,12 +12,12 @@ function getAllCases(req, res){
 function getCaseById(req, res){
     const id = req.params.id;
     if (!validUuid(id)) {
-        return handleBadRequest(res, 'UUID Inválido!');
+        return handleBadRequest(res, 'ID mal formatado!');
     }
     const case_ = casosRepository.caseById(id);
 
     if (!case_) {
-        return handleNotFound(res, 'UUID não encontrado!');
+        return handleNotFound(res, 'Caso não encontrado');
     }
 
     res.status(200).json(case_);
@@ -30,13 +30,13 @@ function addNewCase(req, res){
     }
     
     if (!validUuid(agente_id)) {
-        return handleBadRequest(res, 'Formato de UUID inválido pro agente associado ao caso.');
+        return handleInvalidId(res, 'ID inválido');
     }
 
     const agents = allAgents();
 
     if (!verifyAgentExists(agente_id, agents)) {
-        return handleNotFound(res, 'Agente associado ao caso não encontrado na lista de agentes cadastrados!');
+        return handleNotFound(res, 'Agente não encontrado');
     }
 
     if (!validStatus(status)) {
@@ -64,8 +64,13 @@ function updateCase(req, res) {
         return handleBadRequest(res, 'ID não pode ser alterado!');
     }
 
+    const existingCase = casosRepository.caseById(id);
+    if (!existingCase) {
+        return handleNotFound(res, 'Caso não encontrado!');
+    }
+
     if (Object.keys(updates).length < 4) {
-        return handleBadRequest(res, 'Todos os campos devem que ser preenchidos!');
+        return handleBadRequest(res, 'Todos os campos devem ser preenchidos!');
     }
 
     if (!validStatus(updates.status)) {
@@ -73,19 +78,19 @@ function updateCase(req, res) {
     }
 
     if (!validUuid(updates.agente_id)) {
-        return handleBadRequest(res, 'Formato de UUID inválido pro agente associado ao caso.');
+        return handleBadRequest(res, 'Formato de ID inválido pro agente associado ao caso.');
     }
 
     const agents = allAgents();
 
     if (!verifyAgentExists(updates.agente_id, agents)) {
-        return handleNotFound(res, 'Agente associado ao caso não encontrado na lista de agentes cadastrados!');
+        return handleNotFound(res, 'Agente não encontrado');
     }
 
     const updateCase = casosRepository.updateCaseOnRepo(id, updates);
 
     if (!updateCase) {
-        return handleNotFound(res, 'Caso não encontrado!');
+        return handleNotFound(res, 'Caso não encontrado');
     }
 
     res.status(200).json(updateCase);
@@ -95,8 +100,13 @@ function patchCase(req, res) {
     const id = req.params.id;
     const updates = req.body;
 
+    const existingCase = casosRepository.caseById(id);
+    if (!existingCase) {
+        return handleNotFound(res, 'Caso não encontrado!');
+    }
+
     if (updates.id) {
-        return handleBadRequest(res, 'Não é permitido alterar o ID baka!');
+        return handleBadRequest(res, 'Não é permitido alterar o ID!');
     }
 
     if (updates.status) {
@@ -107,13 +117,26 @@ function patchCase(req, res) {
 
     if (updates.agente_id) {
         if(!validUuid(updates.agente_id)) {
-            return handleBadRequest(res, 'Formato de UUID inválido!');
+            return handleInvalidId(res, 'Formato de ID inválido!');
         }
 
         const agents = allAgents();
         if (!verifyAgentExists(updates.agente_id, agents)) {
-            return handleBadRequest(res, 'Agente associado ao caso não encontrado na lista de agentes cadastrados!');
+            return handleBadRequest(res, 'Agente não encontrado');
         }
+    }
+
+    const cases = casosRepository.allCases();
+    
+    const caseExists = cases.findIndex(c => c.id === id);
+    if (caseExists === -1) {
+        return handleNotFound(res, 'Caso não encontrado!');
+    }
+
+    const allowedFields = ['titulo','descricao','status','agente_id'];
+    const invalidFields = Object.keys(updates).filter(field => !allowedFields.includes(field));
+    if (invalidFields.length > 0) {
+        return handleBadRequest(res, `Campos inválidos: ${invalidFields.join(', ')}`);
     }
 
     const update = casosRepository.patchCaseOnRepo(id, updates);
@@ -133,7 +156,7 @@ function deleteCase(req, res) {
     const caseExists = cases.findIndex(c => c.id === id);
     
    if(!validUuid(id)) {
-        return handleBadRequest(res, 'Formato de UUID inválido!');
+        return handleBadRequest(res, 'Formato de ID inválido!');
     }
 
     if (caseExists === -1) {

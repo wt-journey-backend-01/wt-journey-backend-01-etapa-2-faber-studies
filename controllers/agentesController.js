@@ -1,5 +1,5 @@
 const agentesRepository = require('../repositories/agentesRepository.js');
-const {handleNotFound, handleBadRequest, handleCreated, handleNotContent} = require('../utils/errorHandler.js')
+const {handleNotFound, handleBadRequest, handleCreated, handleNotContent, handleInvalidId} = require('../utils/errorHandler.js')
 const {validUuid, validDate} = require('../utils/validators.js');
 const { v4: uuidv4 } = require('uuid');
 
@@ -14,7 +14,7 @@ function getAgentById(req, res) {
     const id = req.params.id;
 
     if (!validUuid(id)) {
-        return handleBadRequest(res, 'ID mal formatado');
+        return handleInvalidId(res, 'ID inválido');
     }
 
     const agent = agentesRepository.agentsById(id);
@@ -61,7 +61,7 @@ function updateAgent(req, res) {
     const {nome, dataDeIncorporacao, cargo} = req.body;
 
     if (!validUuid(id)) {
-        return handleBadRequest(res, 'ID mal formatado');
+        return handleInvalidId(res, 'ID mal formatado');
     }
 
     const agents = agentesRepository.allAgents();
@@ -104,7 +104,7 @@ function patchAgent(req, res) {
     const updates = req.body;
 
     if (!validUuid(id)) {
-        return handleBadRequest(res, 'ID mal formatado');
+        return handleInvalidId(res, 'ID inválido');
     }
 
     const agents = agentesRepository.allAgents();
@@ -116,6 +116,12 @@ function patchAgent(req, res) {
 
     if (!updates || Object.keys(updates).length === 0) {
         return handleBadRequest(res, 'Envie ao menos um campo para atualizar!');
+    }
+
+    const allowedFields = ['nome','dataDeIncorporacao','cargo'];
+    const invalidFields = Object.keys(updates).filter(field => !allowedFields.includes(field));
+    if (invalidFields.length > 0) {
+        return handleBadRequest(res, `Campos inválidos: ${invalidFields.join(', ')}`);
     }
 
     if (req.body.id) {
@@ -149,7 +155,14 @@ function deleteAgent(req, res) {
     const id = req.params.id;
 
     if (!validUuid(id)) {
-        return handleBadRequest(res, 'ID mal formatado!');
+        return handleInvalidId(res, 'ID mal formatado!');
+    }
+
+    const agents = agentesRepository.allAgents();
+
+    const agentExists = agents.findIndex(a => a.id === id);
+    if (agentExists === -1) {
+        return handleNotFound(res, 'Agente não encontrado!');
     }
 
     const deleted = agentesRepository.deleteAgentOnRepo(id);
